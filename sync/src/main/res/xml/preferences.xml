@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:key="pref_username"
+        android:title="@string/pref_username"
+        android:summary="@string/pref_username_summ"/>
+
+    <EditTextPreference
+        android:key="pref_root_dir"
+        android:title="@string/pref_root_dir"
+        android:summary="@string/pref_root_dir_summ"/>
+
+    <EditTextPreference
+        android:key="pref_host_name"
+        android:title="@string/pref_host_name"
+        android:summary="@string/pref_host_name_summ"/>
+
+    <EditTextPreference
+        android:key="pref_host_port"
+        android:title="@string/pref_host_port"
+        android:summary="@string/pref_host_name_port"/>
+
+    <EditTextPreference
+        android:key="pref_since"
+        android:title="@string/pref_since"
+        android:summary="@string/pref_since_summ"/>
+
+</PreferenceScreen>
