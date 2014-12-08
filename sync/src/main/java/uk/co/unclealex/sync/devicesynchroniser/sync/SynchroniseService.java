@@ -1,11 +1,13 @@
 package uk.co.unclealex.sync.devicesynchroniser.sync;
 
+import android.annotation.TargetApi;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.*;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
 import android.preference.PreferenceManager;
@@ -52,7 +54,7 @@ public class SynchroniseService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        startForeground(ONGOING_NOTIFICATION_ID, notificationOf(R.string.notification_start_message));
+        startForeground(ONGOING_NOTIFICATION_ID, notificationOf(R.string.notification_start_message, true));
         try {
             new Action(getHost(), getPort(), getRootDir(), getSince(), getUser()).execute();
         } catch (Exception e) {
@@ -223,20 +225,21 @@ public class SynchroniseService extends IntentService {
         }
     }
 
-    public Notification notificationOf(int messageId, Object... args) {
+    public Notification notificationOf(int messageId, boolean ongoing, Object... args) {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
         return new NotificationCompat.Builder(this)
                 .setContentTitle(getText(R.string.notification_title))
                 .setContentText(getString(messageId, args))
                 .setContentIntent(pendingIntent)
-                .setSmallIcon(R.drawable.ic_launcher).build();
+                .setOngoing(ongoing)
+                .setSmallIcon(R.drawable.ic_action_sync).build();
     }
 
     public void showNotification(int notificationId, int messageId, Object... args) {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(notificationId, notificationOf(messageId, args));
+        notificationManager.notify(notificationId, notificationOf(messageId, notificationId == ONGOING_NOTIFICATION_ID, args));
     }
 
     public String getHost() {
@@ -244,11 +247,21 @@ public class SynchroniseService extends IntentService {
         return preferences.getString("pref_host_name", "");
     }
 
+    @TargetApi(Build.VERSION_CODES.L)
+    public File[] directoryCandidates() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.L) {
+            return getBaseContext().getExternalMediaDirs();
+        }
+        else {
+            return getBaseContext().getExternalFilesDirs(Environment.DIRECTORY_MUSIC);
+        }
+    }
+
     public File getRootDir() throws IOException {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String rootDir = preferences.getString("pref_root_dir", "");
         if (rootDir.isEmpty()) {
-            File[] rootDirCandidates = getBaseContext().getExternalFilesDirs(Environment.DIRECTORY_MUSIC);
+            File[] rootDirCandidates = directoryCandidates();
             SortedMap<Long, File> candidatesBySize = new TreeMap<Long, File>();
             for (File rootDirCandidate : rootDirCandidates) {
                 long size = new StatFs(rootDirCandidate.getPath()).getTotalBytes();
