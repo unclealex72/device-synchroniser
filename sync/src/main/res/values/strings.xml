@@ -4,15 +4,17 @@
     <string name="app_name">Device Synchroniser</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="syncButtonText">Synchronise Now</string>
+    <string name="sync_button_text">Synchronise Now</string>
     <string name="pref_host_name">Host Name</string>
     <string name="pref_host_name_summ">The name of the host to synchronise with</string>
     <string name="pref_root_dir">Storage root directory</string>
     <string name="pref_root_dir_summ">The directory where the external SD card is mounted</string>
     <string name="pref_host_port">Port</string>
     <string name="pref_host_name_port">The port on which the server is running</string>
-    <string name="pref_since">Last synchronise time</string>
-    <string name="pref_since_summ">The time the device was last synchronised</string>
+    <string name="pref_date_since">Last synchronised date</string>
+    <string name="pref_date_since_summ">The date the device was last synchronised</string>
+    <string name="pref_time_since">Last synchronised time</string>
+    <string name="pref_time_since_summ">The time the device was last synchronised</string>
     <string name="title_activity_settings">Settings</string>
     <string name="pref_username">Username</string>
     <string name="pref_username_summ">The name of the user who owns this device</string>
@@ -21,4 +23,8 @@
     <string name="notification_ongoing_message">%1$d/%2$d %3$s</string>
     <string name="notification_success_message">Synchronised %1$d file(s) successfully</string>
     <string name="notification_failure_message">Synchronisation failed: %1$s</string>
+    <string name="permissions_button_text">Permissions</string>
+    <string name="last_synchronised_text">Last synchronised at</string>
+    <string name="last_synchronised_date_format">dd MMM yyy, HH:mm</string>
+    <string name="never_synchronised">Never synchronised</string>
 </resources>

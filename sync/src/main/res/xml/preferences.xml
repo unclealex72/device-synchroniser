@@ -21,9 +21,11 @@
         android:title="@string/pref_host_port"
         android:summary="@string/pref_host_name_port"/>
 
-    <EditTextPreference
-        android:key="pref_since"
-        android:title="@string/pref_since"
-        android:summary="@string/pref_since_summ"/>
+    <org.bostonandroid.datepreference.DatePreference
+        android:key="pref_date_since" android:title="@string/pref_date_since"
+        android:summary="@string/pref_date_since_summ"/>
 
+    <org.bostonandroid.timepreference.TimePreference
+        android:key="pref_time_since" android:title="@string/pref_time_since"
+        android:summary="@string/pref_time_since_summ"/>
 </PreferenceScreen>
