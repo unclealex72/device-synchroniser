@@ -1,7 +1,6 @@
 package uk.co.unclealex.sync.devicesynchroniser.sync;
 
 import android.app.Activity;
-import android.app.ActionBar;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,25 +9,13 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.os.Build;
-import android.widget.TextView;
-import org.bostonandroid.datepreference.DatePreference;
-import org.bostonandroid.timepreference.TimePreference;
+import android.view.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 
-public class MainActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends Activity {
 
     public static final int PERMISSIONS_REQUEST_CODE = 42;
 
@@ -41,10 +28,6 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        //updateLastSynchronisedTime(sharedPreferences);
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-
     }
 
 
@@ -73,6 +56,9 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             getContentResolver().takePersistableUriPermission(treeUri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION |
                             Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            preferences.edit().putString("pref_root_dir", treeUri.toString()).commit();
+            /*
             DocumentFile pickedDir = DocumentFile.fromTreeUri(this, treeUri);
 
             // List all existing files inside picked directory
@@ -90,6 +76,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             catch (IOException e) {
                 Log.e("TAG", e.getMessage());
             }
+            */
         }
     }
 
@@ -107,28 +94,6 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        updateLastSynchronisedTime(sharedPreferences);
-    }
-
-    protected void updateLastSynchronisedTime(SharedPreferences sharedPreferences) {
-        String text;
-        Calendar day = DatePreference.getDateFor(sharedPreferences, "pref_date_since");
-        Calendar time = TimePreference.getTimeFor(day, sharedPreferences, "pref_time_since");
-        if (time == null) {
-            text = getString(R.string.never_synchronised);
-        }
-        else {
-            DateFormat df = new SimpleDateFormat(getString(R.string.last_synchronised_date_format));
-            String preamble = getString(R.string.last_synchronised_text);
-            Date when = time.getTime();
-            text = preamble + ": " + df.format(when);
-        }
-        TextView view = (TextView) findViewById(R.id.lastSynchronisedTextView);
-        view.setText(text);
     }
 
     /**

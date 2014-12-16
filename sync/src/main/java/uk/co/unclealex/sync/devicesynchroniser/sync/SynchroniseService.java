@@ -9,10 +9,10 @@ import android.content.*;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.provider.DocumentFile;
 import android.util.Log;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -71,11 +71,11 @@ public class SynchroniseService extends IntentService {
 
         private final String host;
         private final String port;
-        private final File rootDir;
+        private final DocumentFile rootDir;
         private final String since;
         private final String user;
 
-        public Action(String host, String port, File rootDir, String since, String user) {
+        public Action(String host, String port, DocumentFile rootDir, String since, String user) {
             this.host = host;
             this.port = port;
             this.rootDir = rootDir;
@@ -146,50 +146,33 @@ public class SynchroniseService extends IntentService {
             showNotification(FINISHED_NOTIFICATION_ID, R.string.notification_success_message, len);
         }
 
-        public File baseDirectory() throws IOException {
-            if (!rootDir.exists() && !rootDir.mkdirs()) {
-                throw new IOException("Cannot find any external storage at " + rootDir);
-            }
-            return new File(rootDir, "synchronised");
-        }
-
-        public File toFile(Change change) throws IOException {
-            return new File(baseDirectory(), change.getRelativePath().toString());
-        }
-
         public void add(Change change) throws IOException, JSONException {
-            File targetFile = toFile(change);
-            File albumDirectory = targetFile.getParentFile();
-            if (targetFile.exists() && !targetFile.delete()) {
-                throw new IOException("Cannot remove existing file " + targetFile);
+            List<String> changePathSegments = change.toPathSegments();
+            DocumentFile albumDir = getRootDir();
+            while (changePathSegments.size() != 1) {
+                String dir = changePathSegments.remove(0);
+                DocumentFile child = albumDir.findFile(dir);
+                if (child == null) {
+                    albumDir = albumDir.createDirectory(dir);
+                }
+                else {
+                    albumDir = child;
+                }
             }
-            if (!albumDirectory.isDirectory() && !albumDirectory.mkdirs()) {
-                throw new IOException("Cannot create directory " + albumDirectory);
+            String filename = changePathSegments.get(0);
+            DocumentFile trackFile = albumDir.findFile(filename);
+            if (trackFile == null) {
+                trackFile = albumDir.createFile("audio/mp3", filename);
             }
-            File relativePath = change.getRelativePath();
-            List<String> pathSegments = toPathSegments(relativePath, "music", user);
-            FileOutputStream out = new FileOutputStream(targetFile);
+            List<String> pathSegments = change.toPathSegments("music", user);
+            OutputStream out = getContentResolver().openOutputStream(trackFile.getUri());
             loadData(out, pathSegments);
             out.close();
-            registerMusicFile(targetFile);
+            registerMusicFile(trackFile);
         }
 
-        private List<String> toPathSegments(File relativePath, String... pathSegments) {
-            List<String> newPathSegments = new LinkedList<String>();
-            do {
-                newPathSegments.add(0, relativePath.getName());
-                relativePath = relativePath.getParentFile();
-            } while (relativePath != null);
-            for (int idx = pathSegments.length - 1; idx >= 0; idx--) {
-                newPathSegments.add(0, pathSegments[idx]);
-            }
-            return newPathSegments;
-        }
-
-        public void registerMusicFile(File targetFile) throws IOException, JSONException {
-            unregisterMusicFile(targetFile);
-            Uri insertUri = Uri.fromFile(targetFile);
-            broadcast(insertUri);
+        public void registerMusicFile(DocumentFile documentFile) throws IOException, JSONException {
+            broadcast(documentFile.getUri());
         }
 
         public void broadcast(Uri uri) {
@@ -197,31 +180,18 @@ public class SynchroniseService extends IntentService {
         }
 
         public void remove(Change change) throws IOException {
-            File targetFile = toFile(change);
-            if (targetFile.exists() && !targetFile.delete()) {
-                throw new IOException("Cannot remove existing file " + targetFile);
+            DocumentFile documentFile = getRootDir();
+            List<String> pathSegments = change.toPathSegments();
+            do {
+                String ps = pathSegments.remove(0);
+                documentFile = documentFile.findFile(ps);
+            } while (!pathSegments.isEmpty());
+            documentFile.delete();
+            DocumentFile parent = documentFile.getParentFile();
+            while (parent.listFiles().length == 0) {
+                parent.delete();
+                parent = parent.getParentFile();
             }
-            unregisterMusicFile(targetFile);
-            File targetDirectory = targetFile.getParentFile();
-            File baseDirectory = baseDirectory();
-            while (!targetDirectory.equals(baseDirectory) && targetDirectory.exists() && targetDirectory.isDirectory()) {
-                if (targetDirectory.list().length == 0) {
-                    targetDirectory.delete();
-                    targetDirectory = targetDirectory.getParentFile();
-                } else {
-                    targetDirectory = baseDirectory;
-                }
-            }
-        }
-
-        public void unregisterMusicFile(File targetFile) {
-            String targetPath = targetFile.getAbsolutePath();
-            ContentResolver contentResolver = getContentResolver();
-            Uri deleteUri = MediaStore.Audio.Media.getContentUriForPath(targetPath);
-            contentResolver.delete(
-                    deleteUri,
-                    MediaStore.MediaColumns.DATA + "=\""
-                            + targetPath + "\"", null);
         }
     }
 
@@ -257,19 +227,14 @@ public class SynchroniseService extends IntentService {
         }
     }
 
-    public File getRootDir() throws IOException {
+    public DocumentFile getRootDir() throws IOException {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String rootDir = preferences.getString("pref_root_dir", "");
-        if (rootDir.isEmpty()) {
-            File[] rootDirCandidates = directoryCandidates();
-            SortedMap<Long, File> candidatesBySize = new TreeMap<Long, File>();
-            for (File rootDirCandidate : rootDirCandidates) {
-                long size = new StatFs(rootDirCandidate.getPath()).getTotalBytes();
-                candidatesBySize.put(size, rootDirCandidate);
-            }
-            return candidatesBySize.get(candidatesBySize.lastKey());
-        } else {
-            return new File(rootDir);
+        if (rootDir.contains(":")) {
+            return DocumentFile.fromTreeUri(getBaseContext(), Uri.parse(rootDir));
+        }
+        else {
+            return DocumentFile.fromFile(new File(rootDir));
         }
     }
 

@@ -4,6 +4,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A class to encapsulate a music file being added or removed.
@@ -54,6 +56,19 @@ public class Change {
                 "type=" + type +
                 ", relativePath=" + relativePath +
                 '}';
+    }
+
+    public List<String> toPathSegments(String... prefixes) {
+        List<String> newPathSegments = new LinkedList<String>();
+        File relativePath = getRelativePath();
+        do {
+            newPathSegments.add(0, relativePath.getName());
+            relativePath = relativePath.getParentFile();
+        } while (relativePath != null);
+        for (int idx = prefixes.length - 1; idx >= 0; idx--) {
+            newPathSegments.add(0, prefixes[idx]);
+        }
+        return newPathSegments;
     }
 
     public Type getType() {

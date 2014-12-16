@@ -11,10 +11,8 @@
     <string name="pref_root_dir_summ">The directory where the external SD card is mounted</string>
     <string name="pref_host_port">Port</string>
     <string name="pref_host_name_port">The port on which the server is running</string>
-    <string name="pref_date_since">Last synchronised date</string>
-    <string name="pref_date_since_summ">The date the device was last synchronised</string>
-    <string name="pref_time_since">Last synchronised time</string>
-    <string name="pref_time_since_summ">The time the device was last synchronised</string>
+    <string name="pref_since">Last synchronise time</string>
+    <string name="pref_since_summ">The time the device was last synchronised</string>
     <string name="title_activity_settings">Settings</string>
     <string name="pref_username">Username</string>
     <string name="pref_username_summ">The name of the user who owns this device</string>
