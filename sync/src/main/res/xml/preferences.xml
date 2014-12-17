@@ -26,4 +26,9 @@
         android:title="@string/pref_since"
         android:summary="@string/pref_since_summ"/>
 
+    <EditTextPreference
+        android:key="pref_offset"
+        android:title="@string/pref_offset"
+        android:summary="@string/pref_offset_summ"/>
+
 </PreferenceScreen>

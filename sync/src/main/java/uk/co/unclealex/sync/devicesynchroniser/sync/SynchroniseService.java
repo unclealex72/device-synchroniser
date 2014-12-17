@@ -5,12 +5,13 @@ import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.*;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.provider.DocumentFile;
 import android.util.Log;
@@ -26,7 +27,9 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -56,7 +59,7 @@ public class SynchroniseService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         startForeground(ONGOING_NOTIFICATION_ID, notificationOf(R.string.notification_start_message, true));
         try {
-            new Action(getHost(), getPort(), getRootDir(), getSince(), getUser()).execute();
+            new Action(getHost(), getPort(), getRootDir(), getSince(), getUser(), getOffset()).execute();
         } catch (Exception e) {
             StringWriter writer = new StringWriter();
             e.printStackTrace(new PrintWriter(writer));
@@ -74,13 +77,15 @@ public class SynchroniseService extends IntentService {
         private final DocumentFile rootDir;
         private final String since;
         private final String user;
+        private final int offset;
 
-        public Action(String host, String port, DocumentFile rootDir, String since, String user) {
+        public Action(String host, String port, DocumentFile rootDir, String since, String user, int offset) {
             this.host = host;
             this.port = port;
             this.rootDir = rootDir;
             this.since = since;
             this.user = user;
+            this.offset = offset;
         }
 
         public Uri.Builder baseUri() {
@@ -129,21 +134,30 @@ public class SynchroniseService extends IntentService {
             return obj;
         }
 
-        public void execute() throws IOException, JSONException {
+        public void execute() throws Exception {
             Date now = new Date();
             JSONArray changes = lookForChanges().getJSONArray("changes");
             int len = changes.length();
-            for (int idx = 0; idx < len; idx++) {
-                Change change = Change.of(changes.getJSONObject(idx));
-                showNotification(ONGOING_NOTIFICATION_ID, R.string.notification_ongoing_message, idx, len, change.getRelativePath());
-                if (Change.Type.ADDED.equals(change.getType())) {
-                    add(change);
-                } else {
-                    remove(change);
+            int idx = 0;
+            try {
+                for (; idx < len; idx++) {
+                    if (idx >= offset) {
+                        Change change = Change.of(changes.getJSONObject(idx));
+                        showNotification(ONGOING_NOTIFICATION_ID, R.string.notification_ongoing_message, idx, len, change.getRelativePath());
+                        if (Change.Type.ADDED.equals(change.getType())) {
+                            add(change);
+                        } else {
+                            remove(change);
+                        }
+                    }
                 }
+                setSince(now);
+                showNotification(FINISHED_NOTIFICATION_ID, R.string.notification_success_message, len);
+            } catch (Exception e) {
+                setOffset(idx);
+                throw e;
             }
-            setSince(now);
-            showNotification(FINISHED_NOTIFICATION_ID, R.string.notification_success_message, len);
+            setOffset(0);
         }
 
         public void add(Change change) throws IOException, JSONException {
@@ -151,7 +165,13 @@ public class SynchroniseService extends IntentService {
             DocumentFile albumDir = getRootDir();
             while (changePathSegments.size() != 1) {
                 String dir = changePathSegments.remove(0);
-                DocumentFile child = albumDir.findFile(dir);
+                DocumentFile[] children = albumDir.listFiles();
+                DocumentFile child = null;
+                for (int idx = 0; child == null && idx < children.length; idx++) {
+                    if (children[idx].getName().equalsIgnoreCase(dir)) {
+                        child = children[idx];
+                    }
+                }
                 if (child == null) {
                     albumDir = albumDir.createDirectory(dir);
                 }
@@ -248,6 +268,11 @@ public class SynchroniseService extends IntentService {
         return preferences.getString("pref_username", "");
     }
 
+    public int getOffset() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        return Integer.parseInt(preferences.getString("pref_offset", "0"));
+    }
+
     public String getSince() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String since = preferences.getString("pref_since", "");
@@ -257,6 +282,11 @@ public class SynchroniseService extends IntentService {
         else {
             return since;
         }
+    }
+
+    public void setOffset(int offset) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences.edit().putString("pref_offset", Integer.toString(offset)).commit();
     }
 
     public void setSince(Date since) {
