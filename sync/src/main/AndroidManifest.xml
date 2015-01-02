@@ -8,10 +8,11 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
+        android:name="uk.co.unclealex.sync.devicesynchroniser.App"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="uk.co.unclealex.sync.devicesynchroniser.sync.MainActivity"
+            android:name="uk.co.unclealex.sync.devicesynchroniser.main.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,16 +21,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="uk.co.unclealex.sync.devicesynchroniser.sync.SettingsActivity"
+            android:name="uk.co.unclealex.sync.devicesynchroniser.prefs.PreferencesActivity"
             android:label="@string/title_activity_settings"
-            android:parentActivityName="uk.co.unclealex.sync.devicesynchroniser.sync.MainActivity" >
+            android:parentActivityName="uk.co.unclealex.sync.devicesynchroniser.main.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="uk.co.unclealex.sync.devicesynchroniser.sync.MainActivity" />
+                android:value="uk.co.unclealex.sync.devicesynchroniser.main.MainActivity"/>
         </activity>
 
         <service
-            android:name="uk.co.unclealex.sync.devicesynchroniser.sync.SynchroniseService"
+            android:name=".SynchroniseService"
             android:exported="false" >
         </service>
     </application>

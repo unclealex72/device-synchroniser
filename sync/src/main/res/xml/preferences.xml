@@ -7,11 +7,6 @@
         android:summary="@string/pref_username_summ"/>
 
     <EditTextPreference
-        android:key="pref_root_dir"
-        android:title="@string/pref_root_dir"
-        android:summary="@string/pref_root_dir_summ"/>
-
-    <EditTextPreference
         android:key="pref_host_name"
         android:title="@string/pref_host_name"
         android:summary="@string/pref_host_name_summ"/>

@@ -24,7 +24,10 @@
     <string name="notification_success_message">Synchronised %1$d file(s) successfully</string>
     <string name="notification_failure_message">Synchronisation failed: %1$s</string>
     <string name="permissions_button_text">Permissions</string>
-    <string name="last_synchronised_text">Last synchronised at</string>
+    <string name="last_synchronised_text">Last synchronised at </string>
     <string name="last_synchronised_date_format">dd MMM yyy, HH:mm</string>
     <string name="never_synchronised">Never synchronised</string>
+    <string name="album_cover_description">Album Cover</string>
+    <string name="changes_pending">There are pending changes</string>
+    <string name="no_changes_pending">There are no pending changes</string>
 </resources>
