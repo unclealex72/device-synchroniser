@@ -162,7 +162,7 @@ public class SynchroniseService extends IntentService {
 
         public void remove(Change change) throws IOException {
             DocumentFile documentFile = rootDir;
-            List<String> pathSegments = change.getRelativePath().getPathSegments();
+            List<String> pathSegments = new ArrayList<String>(change.getRelativePath().getPathSegments());
             do {
                 String ps = pathSegments.remove(0);
                 documentFile = documentFile.findFile(ps);
