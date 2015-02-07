@@ -22,8 +22,8 @@ public class PreferencesImpl implements Preferences {
     private final Iso8601 iso8601;
 
     @Override
-    public String getHost() {
-        return preferences.getString("pref_host_name", "");
+    public String getHost() throws NotInitialisedException {
+        return requiredString("host_name");
     }
 
     @Override
@@ -32,8 +32,16 @@ public class PreferencesImpl implements Preferences {
     }
 
     @Override
-    public String getUser() {
-        return preferences.getString("pref_username", "");
+    public String getUser() throws NotInitialisedException {
+        return requiredString("username");
+    }
+
+    protected String requiredString(String propertySuffix) throws NotInitialisedException {
+        String value = preferences.getString("pref_" + propertySuffix, "");
+        if (value.isEmpty()) {
+            throw new NotInitialisedException("Property " + propertySuffix + " has not been initialised.");
+        }
+        return value;
     }
 
     @Override

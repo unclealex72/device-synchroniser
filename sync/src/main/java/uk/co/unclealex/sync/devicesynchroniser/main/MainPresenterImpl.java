@@ -7,6 +7,7 @@ import uk.co.unclealex.sync.devicesynchroniser.changes.ChangeService;
 import uk.co.unclealex.sync.devicesynchroniser.changes.Changelog;
 import uk.co.unclealex.sync.devicesynchroniser.changes.RelativePath;
 import uk.co.unclealex.sync.devicesynchroniser.dates.Iso8601;
+import uk.co.unclealex.sync.devicesynchroniser.prefs.NotInitialisedException;
 import uk.co.unclealex.sync.devicesynchroniser.prefs.Preferences;
 import uk.co.unclealex.sync.devicesynchroniser.sync.R;
 import uk.co.unclealex.sync.devicesynchroniser.sync.SynchroniseService;
@@ -51,6 +52,8 @@ public class MainPresenterImpl implements MainPresenter {
                     return preferences.getOffset() != 0 || changeService.countChangesSince(preferences.getUser(), preferences.getSince()) != 0;
                 } catch (IOException e) {
                     return false;
+                } catch (NotInitialisedException e) {
+                    return false;
                 }
             }
 
@@ -69,7 +72,7 @@ public class MainPresenterImpl implements MainPresenter {
     }
 
     @Override
-    public Tags loadTags(RelativePath relativePath) throws IOException {
+    public Tags loadTags(RelativePath relativePath) throws IOException, NotInitialisedException {
         return tagsService.loadTags(relativePath);
     }
 }

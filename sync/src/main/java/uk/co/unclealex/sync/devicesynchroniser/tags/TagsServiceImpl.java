@@ -6,6 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import uk.co.unclealex.sync.devicesynchroniser.changes.RelativePath;
 import uk.co.unclealex.sync.devicesynchroniser.io.Io;
+import uk.co.unclealex.sync.devicesynchroniser.prefs.NotInitialisedException;
 import uk.co.unclealex.sync.devicesynchroniser.prefs.Preferences;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ public class TagsServiceImpl implements TagsService {
     private final Preferences preferences;
 
     @Override
-    public Tags loadTags(RelativePath relativePath) throws IOException {
+    public Tags loadTags(RelativePath relativePath) throws IOException, NotInitialisedException {
         try {
             JSONObject obj = io.loadJson(relativePath.prefixedWith("tags", preferences.getUser()));
             Uri coverArtUri = io.uriOf(relativePath.prefixedWith("artwork", preferences.getUser()));

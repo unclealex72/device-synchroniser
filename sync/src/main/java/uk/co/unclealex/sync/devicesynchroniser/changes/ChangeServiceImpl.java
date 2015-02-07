@@ -6,6 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import uk.co.unclealex.sync.devicesynchroniser.dates.Iso8601;
 import uk.co.unclealex.sync.devicesynchroniser.io.Io;
+import uk.co.unclealex.sync.devicesynchroniser.prefs.NotInitialisedException;
 import uk.co.unclealex.sync.devicesynchroniser.prefs.Preferences;
 
 import java.io.IOException;
@@ -32,6 +33,8 @@ public class ChangeServiceImpl implements ChangeService {
             return obj.getInt("count");
         } catch (JSONException e) {
             throw new IOException("Cannot find out the number of changes for " + user + " since " + since, e);
+        } catch (NotInitialisedException e) {
+            return 0;
         }
     }
 
@@ -45,14 +48,20 @@ public class ChangeServiceImpl implements ChangeService {
             }
             return changes;
         } catch (JSONException e) {
-            throw new IOException("Could not parse JSON whilst loading changes.", e);
+            throw new IOException("Could not parse JSON whilst loading changes", e);
+        } catch (NotInitialisedException e) {
+            return new ArrayList<Change>();
         }
     }
 
     @Override
     public void copyChange(Change change, OutputStream out) throws IOException {
         List<String> pathSegments = change.getRelativePath().prefixedWith("music", change.getUser());
-        io.loadData(out, pathSegments);
+        try {
+            io.loadData(out, pathSegments);
+        } catch (NotInitialisedException e) {
+            // Do nothing.
+        }
     }
 
     @Override
@@ -68,6 +77,8 @@ public class ChangeServiceImpl implements ChangeService {
                 }
             } catch (JSONException e) {
                 throw new IOException("Could not parse a changelog request.", e);
+            } catch (NotInitialisedException e) {
+                // Do nothing.
             }
         }
     }

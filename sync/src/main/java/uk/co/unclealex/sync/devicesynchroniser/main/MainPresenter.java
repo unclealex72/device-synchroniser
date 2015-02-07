@@ -2,6 +2,7 @@ package uk.co.unclealex.sync.devicesynchroniser.main;
 
 import uk.co.unclealex.sync.devicesynchroniser.changes.Changelog;
 import uk.co.unclealex.sync.devicesynchroniser.changes.RelativePath;
+import uk.co.unclealex.sync.devicesynchroniser.prefs.NotInitialisedException;
 import uk.co.unclealex.sync.devicesynchroniser.tags.Tags;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ public interface MainPresenter {
 
     public void updatePendingChanges();
 
-    public Tags loadTags(RelativePath relativePath) throws IOException;
+    public Tags loadTags(RelativePath relativePath) throws IOException, NotInitialisedException;
 
     public void loadNextChangelogPage(Changelog changelog) throws IOException;
 }

@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import uk.co.unclealex.sync.devicesynchroniser.changes.Changelog;
 import uk.co.unclealex.sync.devicesynchroniser.changes.ChangelogItem;
+import uk.co.unclealex.sync.devicesynchroniser.prefs.NotInitialisedException;
 import uk.co.unclealex.sync.devicesynchroniser.sync.R;
 import uk.co.unclealex.sync.devicesynchroniser.tags.Tags;
 
@@ -44,7 +45,11 @@ public class ChangelogItemAdapter extends RecyclerView.Adapter<ChangelogItemAdap
             @Override
             protected Tags doInBackground(Void... params) {
                 try {
-                    return mainPresenter.loadTags(ci.getRelativePath());
+                    try {
+                        return mainPresenter.loadTags(ci.getRelativePath());
+                    } catch (NotInitialisedException e) {
+                        return null;
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException("Could not load tags", e);
                 }
@@ -52,6 +57,9 @@ public class ChangelogItemAdapter extends RecyclerView.Adapter<ChangelogItemAdap
 
             @Override
             protected void onPostExecute(final Tags tags) {
+                if (tags == null) {
+                    return;
+                }
                 albumViewHolder.vWhen.setText(new SimpleDateFormat("d MMM yyyy, HH:mm").format(ci.getAt()));
                 albumViewHolder.vArtist.setText(tags.getAlbumArtist());
                 albumViewHolder.vAlbum.setText(tags.getAlbum());

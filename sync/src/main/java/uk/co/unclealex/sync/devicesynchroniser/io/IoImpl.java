@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
+import uk.co.unclealex.sync.devicesynchroniser.prefs.NotInitialisedException;
 import uk.co.unclealex.sync.devicesynchroniser.prefs.Preferences;
 
 import java.io.ByteArrayOutputStream;
@@ -26,17 +27,17 @@ public class IoImpl implements Io {
 
     private final Preferences preferences;
 
-    protected Uri.Builder baseUri() {
+    protected Uri.Builder baseUri() throws NotInitialisedException {
         return new Uri.Builder().scheme("http").encodedAuthority(preferences.getHost() + ":" + preferences.getPort());
     }
 
     @Override
-    public void loadData(OutputStream out, String... pathSegments) throws IOException {
+    public void loadData(OutputStream out, String... pathSegments) throws IOException, NotInitialisedException {
         loadData(out, Arrays.asList(pathSegments));
     }
 
     @Override
-    public void loadData(OutputStream out, List<String> pathSegments) throws IOException {
+    public void loadData(OutputStream out, List<String> pathSegments) throws IOException, NotInitialisedException {
         String url = uriOf(pathSegments).toString();
         HttpClient client = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(url);
@@ -56,7 +57,7 @@ public class IoImpl implements Io {
     }
 
     @Override
-    public Uri uriOf(List<String> pathSegments) {
+    public Uri uriOf(List<String> pathSegments) throws NotInitialisedException {
         Uri.Builder builder = baseUri();
         for (String pathSegment : pathSegments) {
             builder = builder.appendPath(pathSegment);
@@ -65,12 +66,12 @@ public class IoImpl implements Io {
     }
 
     @Override
-    public JSONObject loadJson(String... pathSegments) throws IOException, JSONException {
+    public JSONObject loadJson(String... pathSegments) throws IOException, JSONException, NotInitialisedException {
         return loadJson(Arrays.asList(pathSegments));
     }
 
     @Override
-    public JSONObject loadJson(List<String> pathSegments) throws IOException, JSONException {
+    public JSONObject loadJson(List<String> pathSegments) throws IOException, JSONException, NotInitialisedException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         loadData(out, pathSegments);
         JSONObject obj = new JSONObject(new String(out.toByteArray(), "UTF-8"));

@@ -14,13 +14,13 @@ public interface Preferences {
 
     public void setPort(int port);
 
-    public String getUser();
+    public String getUser() throws NotInitialisedException;
 
     public int getOffset();
 
     public String getSince();
 
-    public String getHost();
+    public String getHost() throws NotInitialisedException;
 
     public void setOffset(int offset);
 
