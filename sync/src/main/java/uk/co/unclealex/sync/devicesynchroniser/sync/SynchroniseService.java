@@ -166,12 +166,15 @@ public class SynchroniseService extends IntentService {
             do {
                 String ps = pathSegments.remove(0);
                 documentFile = documentFile.findFile(ps);
-            } while (!pathSegments.isEmpty());
-            documentFile.delete();
-            DocumentFile parent = documentFile.getParentFile();
-            while (parent.listFiles().length == 0) {
-                parent.delete();
-                parent = parent.getParentFile();
+            } while (!pathSegments.isEmpty() && documentFile != null);
+            // Only delete files if they exist.
+            if (documentFile != null) {
+                documentFile.delete();
+                DocumentFile parent = documentFile.getParentFile();
+                while (parent.listFiles().length == 0) {
+                    parent.delete();
+                    parent = parent.getParentFile();
+                }
             }
         }
     }

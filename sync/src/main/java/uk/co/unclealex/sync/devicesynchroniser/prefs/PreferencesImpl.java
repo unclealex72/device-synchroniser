@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.support.v4.provider.DocumentFile;
+import android.util.Log;
 import lombok.RequiredArgsConstructor;
 import uk.co.unclealex.sync.devicesynchroniser.dates.Iso8601;
 
@@ -62,11 +63,15 @@ public class PreferencesImpl implements Preferences {
     @Override
     public DocumentFile getRootDocumentFile() {
         String rootDir = preferences.getString("pref_root_dir", "");
+        DocumentFile documentFile;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return DocumentFile.fromTreeUri(context, Uri.parse(rootDir));
+            Log.i("Preferences", "This is a lollipop phone. Using " + rootDir + " as a URI.");
+            documentFile = DocumentFile.fromTreeUri(context, Uri.parse(rootDir));
         } else {
-            return DocumentFile.fromFile(new File(rootDir));
+            Log.i("Preferences", "This is a pre-lollipop phone. Using " + rootDir + " as a file.");
+            documentFile = DocumentFile.fromFile(new File(rootDir));
         }
+        return documentFile;
     }
 
     @Override
