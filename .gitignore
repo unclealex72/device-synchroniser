@@ -1,9 +1,6 @@
-.gradle
-/local.properties
-.idea
-*.iml
-.DS_Store
-/build
-/gen
-/project
-/target
+target/
+project/project
+bin/
+local.properties
+/.idea
+proguard-sbt.txt
