@@ -5,7 +5,7 @@ package devsync.json
   **/
 case class Changes(changes: Seq[Change])
 
-sealed trait Change {
+sealed trait Change extends HasRelativePath {
   /**
     * The relative path of the file that changed.
     */
@@ -16,7 +16,7 @@ sealed trait Change {
   val at: IsoDate
 }
 
-case class Addition(relativePath: RelativePath, at: IsoDate, links: Links) extends Change
+case class Addition(relativePath: RelativePath, at: IsoDate, links: Links) extends Change with HasLinks
 
 
 case class Removal(relativePath: RelativePath, at: IsoDate) extends Change

@@ -17,4 +17,13 @@ case class Links(
                   /**
                     * A link to the artwork for the track.
                     */
-                  artwork: URL)
+                  artwork: URL) extends HasLinks {
+  override val links: Links = this
+}
+
+/**
+  * A trait for classes that have the links as above.
+  */
+trait HasLinks {
+  val links: Links
+}

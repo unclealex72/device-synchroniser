@@ -22,6 +22,7 @@ case class RelativePath(pathSegments: Seq[String] = Seq.empty) {
 }
 
 object RelativePath {
+
     def apply(path: String): RelativePath = {
         RelativePath(path.split('/').filterNot(_.isEmpty))
     }
@@ -47,4 +48,23 @@ object RelativePath {
   implicit class StringExtensions(str: String) {
     def /(next: String): RelativePath = RelativePath(join(str, next))
   }
+}
+
+object DirectoryAndFile {
+  /**
+    * Allow decomposition into a directory and filename
+    * @param relativePath
+    * @return
+    */
+  def unapply(relativePath: RelativePath): Option[(RelativePath, String)] = {
+    for {
+      dir <- relativePath.maybeParent
+      name <- relativePath.maybeName
+    } yield (dir, name)
+  }
+}
+
+trait HasRelativePath {
+
+    val relativePath: RelativePath
 }

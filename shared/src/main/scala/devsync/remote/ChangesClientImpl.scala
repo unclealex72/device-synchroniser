@@ -2,88 +2,84 @@ package devsync.remote
 
 import java.io.{ByteArrayOutputStream, OutputStream}
 import java.net.{HttpURLConnection, URL}
+import java.util.Date
 
+import devsync.common.PassthroughLogging
 import devsync.json.IsoDate._
 import devsync.json.RelativePath._
 import devsync.json.{RelativePath, _}
+import devsync.sync.IO
 
-import scala.annotation.tailrec
-import scala.util.{Success, Try}
+import cats.syntax.either._
+
 
 /**
   * Created by alex on 24/03/17
   **/
-class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends ChangesClient {
+class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends ChangesClient with PassthroughLogging {
   /**
     * Get the changes for a user since a specific date.
     */
-  override def changesSince(user: String, since: IsoDate): Try[Changes] = {
-    readUrl(_.parseChanges, "changes" / user / since)
+  override def changesSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changes] = {
+    val since = orDatum(maybeSince)
+    logger.info(s"Looking for changes since $since")
+    readUrl(_.parseChanges, "changes" / user / since).error(s"Could not download changes since $since")
   }
 
   /**
     * Count the number of changelog items for a user since a specific date
     */
-  override def countChangelogSince(user: String, since: IsoDate): Try[Int] = {
-    readUrl(_.parseChangelogCount, "changelog" / "count" / user / since).map(_.count)
+  override def changelogSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changelog] = {
+    val since = orDatum(maybeSince)
+    logger.info(s"Loading the changelog since $since")
+    readUrl(_.parseChangelog, "changelog" / user / since).error(s"Could not download the changelog since $since")
   }
 
-  /**
-    * Get a page of a changelog for a user.
-    */
-  override def changelog(user: String, page: Int, limit: Int): Try[Changelog] = {
-    readUrl(_.parseChangelog, "changelog" / user / Integer.toString(page) / Integer.toString(limit))
-  }
+  def orDatum(maybeSince: Option[IsoDate]): IsoDate = maybeSince.getOrElse(IsoDate(new Date(0)))
 
-  def readUrl[T](parser: JsonCodec => String => Try[T], relativePath: RelativePath): Try[T] = {
+  def readUrl[T](parser: JsonCodec => String => Either[Exception, T], relativePath: RelativePath): Either[Exception, T] = {
     val url = baseUrl / relativePath
-    val body: String = readUrlAsString(url)
-    parser(jsonCodec)(body)
+    for {
+      body <- readUrlAsString(url)
+      result <- parser(jsonCodec)(body)
+    } yield result
   }
 
 
-  def loadUrl(url: URL, out: OutputStream): Try[Unit] = {
+  def loadUrl(url: URL, out: OutputStream, useCache: Boolean = true): Either[Exception, Unit] = {
+    logger.info(s"Loading url $url")
     val conn = url.openConnection.asInstanceOf[HttpURLConnection]
-    try {
-      val in = conn.getInputStream
-      val buffer = new Array[Byte](16384)
-      @tailrec
-      def doStream(total: Int = 0): Int = {
-        val n = in.read(buffer)
-        if (n == -1)
-          total
-        else {
-          out.write(buffer, 0, n)
-          doStream(total + n)
-        }
-      }
-      doStream()
-      Success({})
+    if (!useCache) {
+      conn.addRequestProperty("Cache-Control", "no-cache")
     }
-    finally {
-      conn.disconnect()
+    IO.closing(conn.getInputStream, conn.disconnect()) { in =>
+      IO.copy(in, out)
     }
   }
 
-  def readUrlAsString(url: URL): String = {
+  def readUrlAsString(url: URL): Either[Exception, String] = {
     val buff = new ByteArrayOutputStream
-    loadUrl(url, buff)
-    buff.toString("UTF-8")
+    loadUrl(url, buff).map(_ => buff.toString("UTF-8"))
+  }.error(s"Could not read the data from")
+
+  override def tags(item: HasLinks): Either[Exception, Tags] = {
+    for {
+      tagsData <- readUrlAsString(item.links.tags)
+      tags <- jsonCodec.parseTags(tagsData)
+    } yield tags
   }
 
-  override def tags(addition: Addition): Try[Tags] = {
-    jsonCodec.parseTags(readUrlAsString(addition.links.tags))
-  }
+  override def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] = {
+    logger.info(s"Downloading music for ${item.relativePath}")
+    data(item, _.music, out)
+  }.error(s"Could not download the music for ${item.relativePath}")
 
-  override def music(addition: Addition, out: OutputStream): Try[Unit] = {
-    data(addition, _.music, out)
-  }
+  override def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] = {
+    logger.info(s"Downloading artwork for ${item.relativePath}")
+    data(item, _.artwork, out)
+  }.error(s"Could not download the music for ${item.relativePath}")
 
-  override def artwork(addition: Addition, out: OutputStream): Try[Unit] = {
-    data(addition, _.artwork, out)
-  }
-
-  def data(addition: Addition, urlExtractor: Links => URL, out: OutputStream): Try[Unit] = {
-    loadUrl(urlExtractor(addition.links), out)
+  def data(item: HasLinks, urlExtractor: Links => URL, out: OutputStream): Either[Exception, Unit] = {
+    loadUrl(urlExtractor(item.links), out)
   }
 }

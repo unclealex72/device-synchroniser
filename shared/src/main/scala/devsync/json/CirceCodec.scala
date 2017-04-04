@@ -3,7 +3,7 @@ package devsync.json
 import java.net.URL
 
 import cats.syntax.either._
-import io.circe.{Decoder, DecodingFailure, Encoder, HCursor}
+import io.circe._
 import io.circe.Decoder.Result
 import io.circe.Json.{JObject, JString}
 import io.circe.parser.decode
@@ -20,7 +20,7 @@ class CirceCodec extends JsonCodec {
   implicit val decodeRelativePath: Decoder[RelativePath] = Decoder.decodeString.emap(str => Right(RelativePath(str)))
 
   implicit val decodeIsoDate: Decoder[IsoDate] =
-    Decoder.decodeString.emap(str => Either.fromTry(IsoDate(str)).leftMap(_.getMessage))
+    Decoder.decodeString.emap(str => IsoDate(str).leftMap(_.getMessage))
   implicit val encodeIsoDate: Encoder[IsoDate] = Encoder.encodeString.contramap(_.fmt)
 
   implicit val decodeLinks: Decoder[Links] =
@@ -59,24 +59,28 @@ class CirceCodec extends JsonCodec {
   implicit val decodeDeviceDescriptor: Decoder[DeviceDescriptor] =
     Decoder.forProduct3("user", "lastModified", "offset")(DeviceDescriptor.apply)
 
-  implicit val encodeDeviceDescriptor: Encoder[DeviceDescriptor] =
-    Encoder.forProduct3("user", "lastModified", "offset")(dd => (dd.user, dd.maybeLastModified, dd.maybeOffset))
+  override def parseChangelog(json: String): Either[Exception, Changelog] = decode[Changelog](json)
 
-  override def parseChangelog(json: String): Try[Changelog] = decode[Changelog](json).toTry
+  override def parseChangelogCount(json: String): Either[Exception, ChangelogCount] = decode[ChangelogCount](json)
 
-  override def parseChangelogCount(json: String): Try[ChangelogCount] = decode[ChangelogCount](json).toTry
+  override def parseChanges(json: String): Either[Exception, Changes] = decode[Changes](json)
 
-  override def parseChanges(json: String): Try[Changes] = decode[Changes](json).toTry
-
-  override def parseTags(json: String): Try[Tags] = decode[Tags](json).toTry
+  override def parseTags(json: String): Either[Exception, Tags] = decode[Tags](json)
 
   // Methods included for testing
 
-  def parseChange(json: String): Try[Change] = decode[Change](json).toTry
+  def parseChange(json: String): Either[Exception, Change] = decode[Change](json)
 
-  def parseChangelogItem(json: String): Try[ChangelogItem] = decode[ChangelogItem](json).toTry
+  def parseChangelogItem(json: String): Either[Exception, ChangelogItem] = decode[ChangelogItem](json)
 
-  override def parseDeviceDescriptor(json: String): Try[DeviceDescriptor] = decode[DeviceDescriptor](json).toTry
+  override def parseDeviceDescriptor(json: String): Either[Exception, DeviceDescriptor] = decode[DeviceDescriptor](json)
 
-  override def writeDeviceDescriptor(deviceDescriptor: DeviceDescriptor): String = deviceDescriptor.asJson.spaces2
+  override def writeDeviceDescriptor(deviceDescriptor: DeviceDescriptor): String = {
+    // Encoding fails in Android so just build the object explicitly.
+    val map: Map[String, Json] =
+      Map("user" -> Json.fromString(deviceDescriptor.user)) ++
+        deviceDescriptor.maybeLastModified.map(isoDate => "lastModified" -> Json.fromString(isoDate.fmt)) ++
+        deviceDescriptor.maybeOffset.map(offset => "offset" -> Json.fromInt(offset))
+    Printer.noSpaces.copy(dropNullKeys = true).pretty(map.asJson)
+  }
 }

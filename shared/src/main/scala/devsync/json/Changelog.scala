@@ -5,6 +5,8 @@ package devsync.json
   **/
 case class Changelog(total: Int, changelog: Seq[ChangelogItem])
 
-case class ChangelogItem(parentRelativePath: RelativePath, at: IsoDate, relativePath: RelativePath, links: Links)
+case class ChangelogItem(parentRelativePath: RelativePath,
+                         at: IsoDate,
+                         relativePath: RelativePath, links: Links) extends HasLinks with HasRelativePath
 
 case class ChangelogCount(count: Int)

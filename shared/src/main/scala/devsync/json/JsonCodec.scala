@@ -9,15 +9,15 @@ import scala.util.Try
   **/
 trait JsonCodec {
 
-  def parseChangelog(json: String): Try[Changelog]
+  def parseChangelog(json: String): Either[Exception, Changelog]
 
-  def parseChangelogCount(json: String): Try[ChangelogCount]
+  def parseChangelogCount(json: String): Either[Exception, ChangelogCount]
 
-  def parseChanges(json: String): Try[Changes]
+  def parseChanges(json: String): Either[Exception, Changes]
   
-  def parseTags(json: String): Try[Tags]
+  def parseTags(json: String): Either[Exception, Tags]
 
-  def parseDeviceDescriptor(json: String): Try[DeviceDescriptor]
+  def parseDeviceDescriptor(json: String): Either[Exception, DeviceDescriptor]
 
   def writeDeviceDescriptor(deviceDescriptor: DeviceDescriptor): String
 }

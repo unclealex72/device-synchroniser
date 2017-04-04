@@ -6,10 +6,6 @@ package devsync.json
   **/
 case class DeviceDescriptor(user: String, maybeLastModified: Option[IsoDate], maybeOffset: Option[Int]) extends Serializable {
 
-  def lastModified: IsoDate = maybeLastModified.getOrElse(IsoDate(0l))
-
-  def offset: Int = maybeOffset.getOrElse(0)
-
   def withLastModified(lastModified: IsoDate): DeviceDescriptor = this.copy(maybeLastModified = Some(lastModified))
 
   def withOffset(offset: Int): DeviceDescriptor = this.copy(maybeOffset = Some(offset))

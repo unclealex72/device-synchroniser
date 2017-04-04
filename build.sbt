@@ -30,7 +30,7 @@ lazy val droid = (project in file("android"))
       aar("org.macroid" %% s"macroid$suffix" % "2.0")
     } ++ Seq("server", "servlet", "client").map { suffix =>
       "org.eclipse.jetty" % s"jetty-$suffix" % "8.1.8.v20121106"
-    },
+    } ++ Seq("org.slf4j" % "slf4j-android" % "1.7.25"),
     packagingOptions := PackagingOptions(
       excludes = Seq("about.html")
     ),

@@ -18,4 +18,15 @@ case class Tags(
   artistId: String,
   trackId: String,
   asin: Option[String],
-  trackNumber: Int)
+  trackNumber: Int) {
+
+  def formattedAlbum: String = {
+    if (totalDiscs == 1) {
+      album
+    }
+    else {
+      s"$album ($discNumber of $totalDiscs)"
+    }
+  }
+
+}

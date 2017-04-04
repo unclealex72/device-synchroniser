@@ -8,7 +8,12 @@ import scala.util.Try
 /**
   * Created by alex on 24/03/17
   **/
-case class IsoDate(date: Date, fmt: String)
+case class IsoDate(date: Date, fmt: String) {
+
+  def format(df: String): String = {
+    new SimpleDateFormat(df).format(date)
+  }
+}
 
 object IsoDate {
 
@@ -18,13 +23,20 @@ object IsoDate {
     IsoDate(date, df().format(date))
   }
 
-  def apply(date: String): Try[IsoDate] = Try {
-    IsoDate(df().parse(date.replace("Z", "+0000")), date)
+  def apply(date: String): Either[Exception, IsoDate] = {
+    try {
+      Right(IsoDate(df().parse(date.replace("Z", "+0000")), date))
+    }
+    catch {
+      case e: Exception => Left(e)
+    }
   }
 
   def apply(millis: Long): IsoDate = {
     apply(new Date(millis))
   }
+
+  def now: IsoDate = apply(System.currentTimeMillis())
 
   implicit def isoDateToDate: IsoDate => Date = _.date
   implicit def isoDateToString: IsoDate => String = _.fmt

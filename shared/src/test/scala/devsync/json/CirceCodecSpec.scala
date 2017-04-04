@@ -6,6 +6,8 @@ import org.specs2.mutable.Specification
 
 import scala.io.Source
 import scala.util.{Success, Try}
+import cats.syntax.either._
+
 /**
   * Created by alex on 20/03/17
   **/
@@ -106,19 +108,32 @@ class CirceCodecSpec extends Specification {
         )
       )
     }
+
+    "Writing a device descriptor with just a user" should {
+      "product a json object with just the user field" in {
+        codec.writeDeviceDescriptor(DeviceDescriptor("alex", None, None)) must be_==("""{"user":"alex"}""")
+      }
+    }
+
+    "Writing a device descriptor with all fields" should {
+      "product a json object with all fields populated" in {
+        codec.writeDeviceDescriptor(
+          DeviceDescriptor("alex", Some("2017-03-13T22:05:01.000Z"), Some(5))) must be_==("""{"user":"alex","lastModified":"2017-03-13T22:05:01.000Z","offset":5}""")
+      }
+    }
   }
 
   implicit class StringImplicits(str: String) {
-    def deserialiseUsing[V](method: CirceCodec => (String => Try[V])): V = {
+    def deserialiseUsing[V](method: CirceCodec => (String => Either[Exception, V])): V = {
       val data = Source.fromInputStream(getClass.getResourceAsStream(str)).mkString
       method(new CirceCodec)(data).recover {
         case e: Exception => throw e
-      }.get
+      }.right.get
     }
 
   }
 
   implicit def stringToUrl(str: String): URL = new URL(str)
   implicit def stringToRelativePath(str: String): RelativePath = RelativePath(str)
-  implicit def stringToIsoDate(str: String): IsoDate = IsoDate(str).get
+  implicit def stringToIsoDate(str: String): IsoDate = IsoDate(str).right.get
 }

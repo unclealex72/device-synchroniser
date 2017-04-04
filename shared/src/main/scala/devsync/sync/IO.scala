@@ -9,7 +9,7 @@ import scala.util.Try
   **/
 object IO {
   def copy(in: InputStream, out: OutputStream): Unit = {
-    val bytes = new Array[Byte](8192) //1024 bytes - Buffer size
+    val bytes = new Array[Byte](16384) //16kb - Buffer size
     Iterator
       .continually(in.read(bytes))
       .takeWhile(_ != -1)
@@ -17,21 +17,20 @@ object IO {
   }
 
 
-  def closing[T, C <: Closeable](closeable: C)(block: C => T): T = {
+  def closingTry[T, C <: Closeable](closeable: => C)(block: C => Either[Exception, T], afterClose: => Unit = {}): Either[Exception, T] = {
     try {
       block(closeable)
     }
+    catch {
+      case e: Exception => Left(e)
+    }
     finally {
       Try(closeable.close())
+      Try(afterClose)
     }
   }
 
-  def closing2[T, C1 <: Closeable, C2 <: Closeable](closeable1: C1, closeable2: C2)(block: (C1, C2) => T): T = {
-    try {
-      block(closeable1, closeable2)
-    }
-    finally {
-      Seq(closeable1, closeable2).foreach(c => Try(c.close()))
-    }
+  def closing[T, C <: Closeable](closeable: => C, afterClose: => Unit = {})(block: C => T): Either[Exception, T] = {
+    closingTry(closeable)(cl => Right(block(cl)))
   }
 }
