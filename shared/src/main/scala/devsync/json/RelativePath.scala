@@ -19,6 +19,10 @@ case class RelativePath(pathSegments: Seq[String] = Seq.empty) {
     def maybeParent: Option[RelativePath] = if (pathSegments.isEmpty) None else Some(RelativePath(pathSegments.dropRight(1)))
 
     def maybeName: Option[String] = pathSegments.lastOption
+
+    def push: Option[(String, RelativePath)] = {
+      pathSegments.headOption.map(head => (head, RelativePath(pathSegments.tail)))
+    }
 }
 
 object RelativePath {

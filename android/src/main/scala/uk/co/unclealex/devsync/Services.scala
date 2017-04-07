@@ -4,7 +4,7 @@ import java.net.URL
 
 import android.support.v4.provider.DocumentFile
 import devsync.discovery.{ClingFlacManagerDiscovery, FlacManagerDiscovery}
-import devsync.json.{CirceCodec, JsonCodec}
+import devsync.json.{CirceCodec, IsoClock, JsonCodec, SystemIsoClock}
 import devsync.remote.{ChangesClient, ChangesClientImpl}
 import devsync.sync.{Device, DeviceImpl}
 import org.fourthline.cling.android.AndroidUpnpServiceConfiguration
@@ -21,6 +21,8 @@ object Services {
 
   def changesClient(baseUrl: URL): ChangesClient = new ChangesClientImpl(jsonCodec, baseUrl)
 
-  val device: Device[DocumentFile] = new DeviceImpl[DocumentFile](jsonCodec)
+  val isoClock: IsoClock = SystemIsoClock
+
+  val device: Device[DocumentFile] = new DeviceImpl[DocumentFile](jsonCodec, isoClock)
 
 }

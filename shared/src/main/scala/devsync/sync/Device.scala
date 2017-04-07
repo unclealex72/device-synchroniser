@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext
   **/
 trait Device[R] {
 
-  def synchronise(root: R, changesClient: ChangesClient, deviceListener: DeviceListener[R], deviceDescriptor: DeviceDescriptor)
+  def synchronise(root: R, changesClient: ChangesClient, deviceListener: DeviceListener[R])
                  (implicit resource: Resource[R],
                   resourceStreamProvider: ResourceStreamProvider[R],
                   ec: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]]

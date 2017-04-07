@@ -62,7 +62,7 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
     loadUrl(url, buff).map(_ => buff.toString("UTF-8"))
   }.error(s"Could not read the data from")
 
-  override def tags(item: HasLinks): Either[Exception, Tags] = {
+  override def tags(item: HasLinks with HasRelativePath): Either[Exception, Tags] = {
     for {
       tagsData <- readUrlAsString(item.links.tags)
       tags <- jsonCodec.parseTags(tagsData)

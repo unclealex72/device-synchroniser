@@ -18,13 +18,6 @@ object DocumentFileResource {
 
   implicit object ImplicitDocumentFileResource extends Resource[DocumentFile] with StrictLogging {
 
-    def mkdirs(documentFile: DocumentFile, relativePath: RelativePath): Either[Exception, DocumentFile] = {
-      val empty: Either[Exception, DocumentFile] = Right(documentFile)
-      relativePath.pathSegments.foldLeft(empty) { (previousDocumentFile, name) =>
-        previousDocumentFile.flatMap(mkdir(_, name))
-      }
-    }
-
     private def findOrCreate(documentFile: DocumentFile,
                              name: String,
                              builder: String => DocumentFile,
@@ -102,6 +95,10 @@ object DocumentFileResource {
       }
     }
 
+    override def parent(documentFile: DocumentFile): Option[DocumentFile] = Option(documentFile.getParentFile)
+
+    override def isEmpty(documentFile: DocumentFile): Boolean =
+      Option(documentFile.listFiles()).exists(_.isEmpty)
   }
 
   class DocumentFileResourceStreamProvider(implicit contextWrapper: ContextWrapper) extends ResourceStreamProvider[DocumentFile] {

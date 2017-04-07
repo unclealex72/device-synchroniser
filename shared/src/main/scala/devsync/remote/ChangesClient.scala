@@ -22,7 +22,7 @@ trait ChangesClient {
 
   def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit]
 
-  def tags(item: HasLinks): Either[Exception, Tags]
+  def tags(item: HasLinks with HasRelativePath): Either[Exception, Tags]
 
   def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit]
 }

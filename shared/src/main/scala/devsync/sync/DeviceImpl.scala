@@ -12,9 +12,9 @@ import devsync.remote.ChangesClient
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 /**
-  * Created by alex on 27/03/17
+  * Created by alex on 27/03/17apply
   **/
-class DeviceImpl[R](jsonCodec: JsonCodec) extends Device[R] with StrictLogging {
+class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] with StrictLogging {
 
   val DESCRIPTOR_FILENAME = "device.json"
 
@@ -24,14 +24,19 @@ class DeviceImpl[R](jsonCodec: JsonCodec) extends Device[R] with StrictLogging {
   override def synchronise(
                             root: R,
                             changesClient: ChangesClient,
-                            deviceListener: DeviceListener[R],
-                            deviceDescriptor: DeviceDescriptor)
+                            deviceListener: DeviceListener[R])
                           (implicit resource: Resource[R],
                            resourceStreamProvider: ResourceStreamProvider[R],
                            ec: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]] = {
     Future(deviceListener.synchronisingStarting())
-    new Synchroniser(root, changesClient, deviceListener, deviceDescriptor).synchronise.map { result =>
-      result.leftMap(ewmi => (ewmi.e, ewmi.maybeIdx))
+    findDeviceDescriptor(Seq(root)) match {
+      case Right(deviceDescriptor) =>
+        new Synchroniser(root, changesClient, deviceListener, deviceDescriptor).synchronise.map { result =>
+          result.leftMap(ewmi => (ewmi.e, ewmi.maybeIdx))
+        }
+      case Left(e) =>
+        deviceListener.synchronisingFailed(e, None)
+        Future.successful(Left(e, None))
     }
   }
 
@@ -148,7 +153,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec) extends Device[R] with StrictLogging {
           for {
             directory <- EitherT(Future.successful(resource.mkdirs(root, dir)))
             file <- EitherT(Future.successful(resource.findOrCreateFile(directory, "audio/mp3", name)))
-            _ <- EitherT(Future(resource.writeTo(file, out => changesClient.music(addition, out))))
+            _ <- EitherT(Future.successful(resource.writeTo(file, out => changesClient.music(addition, out))))
           } yield {
             file
           }
@@ -164,7 +169,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec) extends Device[R] with StrictLogging {
       logger.info(s"Removing $path")
       EitherT.right[Future, Exception, Unit] {
         Future.successful {
-          resource.find(root, path).foreach(resource.remove)
+          resource.find(root, path).foreach(resource.removeAndCleanDirectories)
         }
       }
     }
@@ -185,7 +190,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec) extends Device[R] with StrictLogging {
       // Finished - log whether synchronisation was successful or not and write the new device descriptor back to the
       val newDeviceDescriptor = accumulatedResult match {
         case Right(_) =>
-          deviceDescriptor.copy(maybeLastModified = Some(IsoDate.now), maybeOffset = None)
+          deviceDescriptor.copy(maybeLastModified = Some(isoClock.now), maybeOffset = None)
         case Left(ewmi) =>
           // If the failed index is empty, keep the old index.
           logger.error(s"Synchronising failed at index ${ewmi.maybeIdx}", ewmi.e)

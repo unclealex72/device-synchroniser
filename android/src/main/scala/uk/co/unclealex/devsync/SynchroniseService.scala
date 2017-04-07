@@ -35,7 +35,7 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
     val deviceListener = createNewDeviceListener
     val device = Services.device
     implicit val resourceStreamProvider: DocumentFileResourceStreamProvider = new DocumentFileResourceStreamProvider()
-    device.synchronise(rootDocumentFile, changesClient, deviceListener, intent.deviceDescriptor)
+    device.synchronise(rootDocumentFile, changesClient, deviceListener)
   }
 
   def createNewDeviceListener: DeviceListener[DocumentFile] = new DeviceListener[DocumentFile] {

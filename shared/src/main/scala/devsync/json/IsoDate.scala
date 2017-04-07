@@ -36,9 +36,15 @@ object IsoDate {
     apply(new Date(millis))
   }
 
-  def now: IsoDate = apply(System.currentTimeMillis())
-
   implicit def isoDateToDate: IsoDate => Date = _.date
   implicit def isoDateToString: IsoDate => String = _.fmt
   implicit def dateToIsoDate: Date => IsoDate = apply
+}
+
+trait IsoClock {
+  def now: IsoDate
+}
+
+object SystemIsoClock extends IsoClock {
+  def now: IsoDate = IsoDate(System.currentTimeMillis())
 }
