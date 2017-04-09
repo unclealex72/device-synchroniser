@@ -14,8 +14,8 @@ import scala.concurrent.duration._
 class DeviceImplSpec extends Specification {
 
   "Adding changes to a device with a malformed device descriptor" should {
-    val fs: D =
-      D.root(
+    val fs: Directory =
+      d.root(
         f("application/json", "device.json", """wrong"""))
     val changesClient = FauxChangesClient(
       "2017-03-13T22:05:01.000Z",
@@ -44,8 +44,8 @@ class DeviceImplSpec extends Specification {
   }
 
   "Adding changes to an empty device" should {
-    val fs: D =
-      D.root(
+    val fs: Directory =
+      d.root(
         f("application/json", "device.json", """{"user": "alex"}"""))
     val changesClient = FauxChangesClient(
       "2017-03-13T22:04:01.000Z",
@@ -80,8 +80,8 @@ class DeviceImplSpec extends Specification {
   }
 
   "Adding changes to a populated device" should {
-    val fs: D =
-      D.root(
+    val fs: Directory =
+      d.root(
         f("application/json", "device.json", """{"user": "alex"}"""),
         d("N", d("Napalm Death", d("Scum", f("audio/mp3", "12 You Suffer.mp3", "But why?")))),
         d("N", d("Nirvana", d("Nevermind", f("audio/mp3", "3 Lithium.mp3", "Grunge")))))
@@ -119,8 +119,8 @@ class DeviceImplSpec extends Specification {
   }
 
   "A set of changes with a failure" should {
-    val fs: D =
-      D.root(
+    val fs: Directory =
+      d.root(
         f("application/json", "device.json", """{"user": "alex"}"""),
         d("N", d("Nirvana", d("Nevermind", f("audio/mp3", "3 Lithium.mp3", "Grunge")))))
     val changesClient = FauxChangesClient(
@@ -159,8 +159,8 @@ class DeviceImplSpec extends Specification {
   }
 
   "Continuing from a failure" should {
-    val fs: D =
-      D.root(
+    val fs: Directory =
+      d.root(
         f("application/json", "device.json", """{"user": "alex", "offset": 1}"""),
         d("N", d("Nirvana", d("Nevermind", f("audio/mp3", "3 Lithium.mp3", "Grunge")))),
         d("Q", d("Queen", d("Flash Gordon", f("audio/mp3", "1 Flash's Theme.mp3", "Flash")))),

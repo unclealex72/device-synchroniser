@@ -28,17 +28,17 @@ sealed trait FauxFile extends Ordered[FauxFile] {
   def flatten: Seq[String]
 }
 
-case class D(
+case class Directory(
               override val name: String,
               children: mutable.SortedSet[FauxFile] = mutable.SortedSet.empty,
               override val maybeParent: Option[FauxFile] = None) extends FauxFile {
-  
-  def createFile(mimeType: String, name: String, content: Option[String] = None): F = {
-    create(F(mimeType = mimeType, name = name, maybeParent = Some(this), content = content))
+
+  def createFile(mimeType: String, name: String, content: Option[String] = None): File = {
+    create(File(mimeType = mimeType, name = name, maybeParent = Some(this), content = content))
   }
 
-  def createDirectory(name: String): D = {
-    create(D(name = name, maybeParent = Some(this)))
+  def createDirectory(name: String): Directory = {
+    create(Directory(name = name, maybeParent = Some(this)))
   }
 
   private def create[F <: FauxFile](fauxFile: F) = {
@@ -46,7 +46,7 @@ case class D(
     fauxFile
   }
 
-  def apply(entries: (D => FauxFile)*): D = {
+  def apply(entries: (Directory => FauxFile)*): Directory = {
     children ++= entries.map(entry => entry(this))
     this
   }
@@ -60,7 +60,7 @@ case class D(
   def flatten: Seq[String] = Seq(s"$this") ++ children.flatMap(_.flatten)
 }
 
-case class F(
+case class File(
               mimeType: String,
               override val name: String,
               var content: Option[String] = None,
@@ -75,13 +75,13 @@ case class F(
 }
 
 object FauxFile {
-  
+
   implicit object FauxResource extends Resource[FauxFile] {
     override def canWrite(fauxFile: FauxFile): Boolean = true
 
     override def find(fauxFile: FauxFile, path: RelativePath): Option[FauxFile] = {
       (fauxFile, path) match {
-        case (d : D, DirectoryAndFile(dir, name)) =>
+        case (d : Directory, DirectoryAndFile(dir, name)) =>
           if (dir.pathSegments.isEmpty) {
             d.children.find(child => name == child.name)
           }
@@ -100,25 +100,25 @@ object FauxFile {
 
     override def findOrCreateFile(fauxFile: FauxFile, mimeType: String, name: String): Either[Exception, FauxFile] = {
       fauxFile match {
-        case d : D => Right(d.createFile(mimeType, name))
+        case d : Directory => Right(d.createFile(mimeType, name))
         case _ => Left(new IOException(s"Cannot create file $name at ${fauxFile.path}"))
       }
     }
 
     override def mkdir(fauxFile: FauxFile, name: String): Either[Exception, FauxFile] = {
       fauxFile match {
-        case d: D => d.children.find(child => child.name == name) match {
-          case Some(d: D) => Right(d)
-          case Some(f: F) => Left(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
+        case d: Directory => d.children.find(child => child.name == name) match {
+          case Some(d: Directory) => Right(d)
+          case Some(f: File) => Left(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
           case None => Right(d.createDirectory(name))
         }
-        case f: F => Left(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
+        case f: File => Left(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
       }
     }
 
     override def remove(fauxFile: FauxFile): Unit = {
       fauxFile.maybeParent.foreach {
-        case d : D => d.children.remove(fauxFile)
+        case d : Directory => d.children.remove(fauxFile)
         case _ =>
       }
     }
@@ -126,47 +126,45 @@ object FauxFile {
     override def parent(fauxFile: FauxFile): Option[FauxFile] = fauxFile.maybeParent
 
     override def isEmpty(fauxFile: FauxFile): Boolean = fauxFile match {
-      case d : D if d.children.isEmpty => true
+      case d : Directory if d.children.isEmpty => true
       case _ => false
     }
   }
-  
+
   implicit object FauxResourceStreamProvider extends ResourceStreamProvider[FauxFile] {
-    
+
     override def provideInputStream(fauxFile: FauxFile): Either[Exception, InputStream] = {
       fauxFile match {
-        case f : F => Right(new ByteArrayInputStream(f.content.getOrElse("").getBytes("UTF-8")))
-        case d : D => Left(new IOException(s"Cannot read from a directory ${d.path}"))
+        case f : File => Right(new ByteArrayInputStream(f.content.getOrElse("").getBytes("UTF-8")))
+        case d : Directory => Left(new IOException(s"Cannot read from a directory ${d.path}"))
       }
     }
 
     override def provideOutputStream(fauxFile: FauxFile): Either[Exception, OutputStream] = {
       fauxFile match {
-        case f : F =>
+        case f : File =>
           Right(new ByteArrayOutputStream() {
             override def close(): Unit = {
               super.close()
               f.content = Some(toString("UTF-8"))
             }
           })
-        case d: D => Left(new IOException(s"Cannot write to directory ${d.path}"))
+        case d: Directory => Left(new IOException(s"Cannot write to directory ${d.path}"))
       }
     }
   }
 }
 
-object D {
-  def root: D = D("")
-}
-
 object d {
-  def apply(name: String, entries: (D => FauxFile)*): D => D = { d =>
-    D(name = name, maybeParent = Some(d))(entries :_*)
+  def root: Directory = Directory("")
+
+  def apply(name: String, entries: (Directory => FauxFile)*): Directory => Directory = { d =>
+    Directory(name = name, maybeParent = Some(d))(entries :_*)
   }
 }
 
 object f {
-  def apply(mimeType: String, name: String, content: String): D => F = { d =>
-    F(mimeType = mimeType, name = name, content = Some(content), maybeParent = Some(d))
+  def apply(mimeType: String, name: String, content: String): Directory => File = { d =>
+    File(mimeType = mimeType, name = name, content = Some(content), maybeParent = Some(d))
   }
 }
