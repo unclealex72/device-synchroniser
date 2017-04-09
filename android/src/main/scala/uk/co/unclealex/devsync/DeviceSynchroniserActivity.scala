@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.support.design.widget.FloatingActionButton
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.ViewGroup.LayoutParams
 import android.view.{Gravity, LayoutInflater, View, ViewGroup}
@@ -14,24 +16,22 @@ import android.widget._
 import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.common.Messages
-import devsync.json.{Changelog, ChangelogItem, IsoDate}
+import devsync.json.{Changelog, ChangelogItem, IsoDate, RelativePath}
 import devsync.remote.ChangesClient
 import macroid.FullDsl.{text, _}
 import macroid._
 import macroid.extras.ImageViewTweaks._
+import macroid.extras.FloatingActionButtonTweaks._
 import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.IntentHelper._
 
 import scala.concurrent.Future
 
+
 /**
   * Created by alex on 30/03/17
   **/
-class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with StrictLogging {
-
-  var changelogView = slot[RecyclerView]
-  var synchroniseButton = slot[Button]
-  var changeCountView = slot[TextView]
+class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppCompatActivity] with StrictLogging {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     val intent = getIntent
@@ -39,42 +39,35 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
     val resourceUri = intent.resourceUri
     val serverUrl = intent.serverUrl
     super.onCreate(savedInstanceState)
-    setContentView {
-      Ui.get {
-        l[LinearLayout](
-          w[Button] <~ wire(synchroniseButton) <~ text("Synchronise") <~ disable <~ On.click {
-            val synchroniseIntent = new Intent(this, classOf[SynchroniseService])
-            synchroniseIntent.put(deviceDescriptor, resourceUri, serverUrl)
-            this.startService(synchroniseIntent)
-            toast(Messages.Changes.synchronisationStarted) <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
-          },
-          w[TextView] <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified)),
-          w[TextView] <~ wire(changeCountView) <~ text(Messages.Changes.changes(0)),
-          w[RecyclerView] <~ wire(changelogView) <~ lp[LinearLayout](LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT) <~ hide
-        ) <~ vertical
+    setContentView(R.layout.device_synchroniser_activity)
+    val rootView = findViewById(R.id.content)
+    Transformer {
+      case LastUpdatedView(t) => t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
+      case ChangeCountView(t) => t <~ text(Messages.Changes.changes(0))
+      case SynchroniseButtonView(b) => b <~ disable <~ On.click {
+        val synchroniseIntent = new Intent(this, classOf[SynchroniseService])
+        synchroniseIntent.put(deviceDescriptor, resourceUri, serverUrl)
+        this.startService(synchroniseIntent)
+        toast(Messages.Changes.synchronisationStarted) <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
       }
+    }(rootView).get
+    val changesClient = Services.changesClient(new URL(serverUrl))
+    populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).
+      filter(changelog => changelog.items.nonEmpty).mapUi { changelog =>
+      Transformer {
+        case ChangesContainerView(rv) =>
+          rv.setLayoutManager {
+            val llm = new LinearLayoutManager(this)
+            llm.setOrientation(LinearLayoutManager.VERTICAL)
+            llm
+          }
+          rv.setHasFixedSize(true)
+          rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
+          rv <~ show
+        case ChangeCountView(t) => t <~ text(Messages.Changes.changes(changelog.items.size))
+        case SynchroniseButtonView(b) => b <~ enable
+      }(rootView)
     }
-    changelogView.foreach { rv =>
-      val changesClient = Services.changesClient(new URL(serverUrl))
-      populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).
-        filter(changelog => changelog.items.nonEmpty).mapUi { changelog =>
-        Ui.sequence(
-          Ui {
-            rv.setLayoutManager {
-              val llm = new LinearLayoutManager(this)
-              llm.setOrientation(LinearLayoutManager.VERTICAL)
-              llm
-            }
-            rv.setHasFixedSize(true)
-            rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
-          },
-          changeCountView <~ text(Messages.Changes.changes(changelog.items.size)),
-          synchroniseButton <~ enable,
-          changelogView <~ show
-        )
-      }
-    }
-
   }
 
   class ChangelogItemAdapter(changesClient: ChangesClient, changelog: Changelog) extends RecyclerView.Adapter[AlbumViewHolder] {
@@ -95,7 +88,7 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
       }
       Artwork(maybeBuffer, artworkView.getMaxWidth, artworkView.getMaxHeight)
     }.mapUi { bitmap =>
-        vh.albumArtwork <~ ivSrc(bitmap)
+      vh.albumArtwork <~ ivSrc(bitmap)
     }
 
     private def loadTags(vh: AlbumViewHolder, changelogItem: ChangelogItem) = Future {
@@ -136,5 +129,16 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
   def populateChangelog(changesClient: ChangesClient, user: String, maybeLastModified: Option[IsoDate]): Future[Changelog] = Future {
     changesClient.changelogSince(user, maybeLastModified).getOrElse(Changelog(Seq.empty))
   }
-}
 
+  // Extractors for the different view components
+  class ViewExtractor[V <: View](val id: Int) {
+    def unapply(view: View): Option[V] = view match {
+      case v: V if v.getId == id => Some(v)
+      case _ => None
+    }
+  }
+  object ChangeCountView extends ViewExtractor[TextView](R.id.changeCountView)
+  object LastUpdatedView extends ViewExtractor[TextView](R.id.lastUpdatedView)
+  object SynchroniseButtonView extends ViewExtractor[FloatingActionButton](R.id.fab_action_button)
+  object ChangesContainerView extends ViewExtractor[RecyclerView](R.id.recycler)
+}
