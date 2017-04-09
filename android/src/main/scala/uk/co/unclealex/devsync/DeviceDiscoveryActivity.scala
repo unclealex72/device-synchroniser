@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.support.v4.provider.DocumentFile
 import android.view.ViewGroup.LayoutParams._
 import android.widget._
-import devsync.common.PassthroughLogging
+import devsync.common.{Messages, PassthroughLogging}
 import devsync.sync.DeviceImpl
 import macroid.FullDsl._
 import macroid._
@@ -15,7 +15,6 @@ import uk.co.unclealex.devsync.Async._
 
 import scala.util.{Failure, Success}
 import cats.syntax.either._
-
 import IntentHelper._
 import DocumentFileResource._
 
@@ -34,14 +33,14 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
       Ui.get {
         l[LinearLayout](
           w[ProgressBar] <~ wire(progressBar) <~ lp[LinearLayout](MATCH_PARENT, WRAP_CONTENT) <~ hide,
-          w[Button] <~ wire(findDeviceButton) <~ text("Find Device") <~ hide <~ On.click {
+          w[Button] <~ wire(findDeviceButton) <~ text(Messages.Discovery.findDevice) <~ hide <~ On.click {
             Ui {
               val intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
               intent.setFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
               startActivityForResult(intent, 0)
             }
           },
-          w[TextView] <~ wire(errorMessage) <~ text("err!") <~ hide
+          w[TextView] <~ wire(errorMessage) <~ hide
         ) <~ vertical
       }
     }

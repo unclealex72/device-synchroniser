@@ -1,7 +1,5 @@
 package devsync.json
 
-import scala.util.Try
-
 /**
   * Created by alex on 20/03/17
   *
@@ -10,8 +8,6 @@ import scala.util.Try
 trait JsonCodec {
 
   def parseChangelog(json: String): Either[Exception, Changelog]
-
-  def parseChangelogCount(json: String): Either[Exception, ChangelogCount]
 
   def parseChanges(json: String): Either[Exception, Changes]
   

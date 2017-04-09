@@ -30,10 +30,7 @@ class CirceCodec extends JsonCodec {
     Decoder.forProduct4("parentRelativePath", "at", "relativePath", "_links")(ChangelogItem.apply)
 
   implicit val decodeChangelog: Decoder[Changelog] =
-    Decoder.forProduct2("total", "changelog")(Changelog.apply)
-
-  implicit val decodeChangelogCount: Decoder[ChangelogCount] =
-    Decoder.forProduct1("count")(ChangelogCount.apply)
+    Decoder.forProduct1("changelog")(Changelog.apply)
 
   implicit val decodeChange: Decoder[Change] = {
     val decodeAddition: Decoder[Change] = Decoder.forProduct3("relativePath", "at", "_links")(Addition.apply)
@@ -60,8 +57,6 @@ class CirceCodec extends JsonCodec {
     Decoder.forProduct3("user", "lastModified", "offset")(DeviceDescriptor.apply)
 
   override def parseChangelog(json: String): Either[Exception, Changelog] = decode[Changelog](json)
-
-  override def parseChangelogCount(json: String): Either[Exception, ChangelogCount] = decode[ChangelogCount](json)
 
   override def parseChanges(json: String): Either[Exception, Changes] = decode[Changes](json)
 

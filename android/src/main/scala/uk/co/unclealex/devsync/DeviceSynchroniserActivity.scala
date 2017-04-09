@@ -2,6 +2,7 @@ package uk.co.unclealex.devsync
 
 import java.io.ByteArrayOutputStream
 import java.net.URL
+import java.text.SimpleDateFormat
 
 import android.app.Activity
 import android.content.Intent
@@ -12,6 +13,7 @@ import android.view.{Gravity, LayoutInflater, View, ViewGroup}
 import android.widget._
 import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
+import devsync.common.Messages
 import devsync.json.{Changelog, ChangelogItem, IsoDate}
 import devsync.remote.ChangesClient
 import macroid.FullDsl.{text, _}
@@ -44,28 +46,31 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
             val synchroniseIntent = new Intent(this, classOf[SynchroniseService])
             synchroniseIntent.put(deviceDescriptor, resourceUri, serverUrl)
             this.startService(synchroniseIntent)
-            toast("Synchronisation started") <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
+            toast(Messages.Changes.synchronisationStarted) <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
           },
-          w[TextView] <~ text(deviceDescriptor.maybeLastModified.map(d => s"Last updated at $d").getOrElse("Never updated")),
-          w[TextView] <~ wire(changeCountView) <~ text("No changes"),
-          w[RecyclerView] <~ wire(changelogView) <~ lp[LinearLayout](LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+          w[TextView] <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified)),
+          w[TextView] <~ wire(changeCountView) <~ text(Messages.Changes.changes(0)),
+          w[RecyclerView] <~ wire(changelogView) <~ lp[LinearLayout](LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT) <~ hide
         ) <~ vertical
       }
     }
     changelogView.foreach { rv =>
-      rv.setLayoutManager {
-        val llm = new LinearLayoutManager(this)
-        llm.setOrientation(LinearLayoutManager.VERTICAL)
-        llm
-      }
       val changesClient = Services.changesClient(new URL(serverUrl))
       populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).
-        filter(changelog => changelog.total != 0).mapUi { changelog =>
-        rv.setHasFixedSize(true)
-        rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
+        filter(changelog => changelog.items.nonEmpty).mapUi { changelog =>
         Ui.sequence(
-          changeCountView <~ text(s"There are ${changelog.total} changes"),
-          synchroniseButton <~ enable
+          Ui {
+            rv.setLayoutManager {
+              val llm = new LinearLayoutManager(this)
+              llm.setOrientation(LinearLayoutManager.VERTICAL)
+              llm
+            }
+            rv.setHasFixedSize(true)
+            rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
+          },
+          changeCountView <~ text(Messages.Changes.changes(changelog.items.size)),
+          synchroniseButton <~ enable,
+          changelogView <~ show
         )
       }
     }
@@ -73,7 +78,7 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
   }
 
   class ChangelogItemAdapter(changesClient: ChangesClient, changelog: Changelog) extends RecyclerView.Adapter[AlbumViewHolder] {
-    override def getItemCount: Int = changelog.total
+    override def getItemCount: Int = changelog.items.size
 
     override def onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): AlbumViewHolder = {
       val itemView = LayoutInflater.
@@ -99,7 +104,7 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
       case Right(tags) =>
         (tags.album, tags.artist)
       case Left(_) =>
-        (changelogItem.relativePath.toString, "Removed")
+        (changelogItem.relativePath.toString, Messages.Changes.removed)
     }.mapUi {
       case (albumText, artistText) =>
         Ui.sequence(
@@ -110,10 +115,12 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
     }
 
     override def onBindViewHolder(vh: AlbumViewHolder, idx: Int): Unit = {
-      val changelogItem = changelog.changelog(idx)
-      loadArtwork(vh, changelogItem)
-      loadTags(vh, changelogItem)
-      Ui.run(vh.timeText <~ text(changelogItem.at.format("dd/MM/yyyy HH:mm:ss")))
+      if (changelog.items.isDefinedAt(idx)) {
+        val changelogItem = changelog.items(idx)
+        loadArtwork(vh, changelogItem)
+        loadTags(vh, changelogItem)
+        Ui.run(vh.timeText <~ text(changelogItem.at.format("dd/MM/yyyy HH:mm:ss")))
+      }
     }
 
 
@@ -127,7 +134,7 @@ class DeviceSynchroniserActivity extends Activity with Contexts[Activity] with S
   }
 
   def populateChangelog(changesClient: ChangesClient, user: String, maybeLastModified: Option[IsoDate]): Future[Changelog] = Future {
-    changesClient.changelogSince(user, maybeLastModified).getOrElse(Changelog(0, Seq.empty))
+    changesClient.changelogSince(user, maybeLastModified).getOrElse(Changelog(Seq.empty))
   }
 }
 

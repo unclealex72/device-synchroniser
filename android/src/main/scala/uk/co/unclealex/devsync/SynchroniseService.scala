@@ -7,12 +7,13 @@ import android.content.{Context, Intent}
 import android.net.Uri
 import android.support.v4.provider.DocumentFile
 import com.typesafe.scalalogging.StrictLogging
+import devsync.common.Messages
 import devsync.json._
 import devsync.sync.DeviceListener
-import macroid._
+import macroid.Contexts
+import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
-import Async._
 
 /**
   * Created by alex on 02/04/17
@@ -69,11 +70,11 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
     }
 
     override def synchronisingFinished(count: Int): Unit = {
-      buildAndNotify(Left(s"Successfully synchronised $count tracks."))
+      buildAndNotify(Left(Messages.Sync.finished(count)))
     }
 
     override def synchronisingFailed(e: Exception, maybeIdx: Option[Int]): Unit = {
-      buildAndNotify(Left(s"Synchronisation failed${maybeIdx.map(idx => s" for track $idx")}: ${e.getMessage}"))
+      buildAndNotify(Left(Messages.Sync.failed(e, maybeIdx)))
     }
   }
 
@@ -83,7 +84,7 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
 
   def buildNotification(data: Either[String, (Change, Option[Tags], Option[Array[Byte]], Int, Int)]): Notification = {
     val builder = new Notification.Builder(this).
-      setContentTitle(getText(R.string.notification_title)).
+      setContentTitle(Messages.Sync.notificationTitle).
       setSmallIcon(R.drawable.ic_action_sync)
     data match {
       case Left(message) =>
@@ -99,8 +100,8 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
             Seq(tags.artist, tags.formattedAlbum, s"${tags.trackNumber} ${tags.title}")
           case None =>
             change match {
-              case Addition(relativePath, _, _) => Seq("Adding", relativePath.toString)
-              case Removal(relativePath, _) => Seq("Removing", relativePath.toString())
+              case Addition(relativePath, _, _) => Seq(Messages.Sync.adding, relativePath.toString)
+              case Removal(relativePath, _) => Seq(Messages.Sync.removing, relativePath.toString())
             }
         }
         builder.setLargeIcon(Artwork(maybeArtwork, iconWidth, iconHeight))

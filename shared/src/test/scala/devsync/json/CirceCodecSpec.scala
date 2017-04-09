@@ -72,18 +72,10 @@ class CirceCodecSpec extends Specification {
     }
   }
 
-  "Reading a changelog count" should {
-    "correctly read the number of changelog items" in {
-      "changelog-count.json".deserialiseUsing(_.parseChangelogCount) must be_==(ChangelogCount(2))
-    }
-  }
-
   "Reading a full changelog count" should {
     "correctly deserialise" in {
       "changelog.json".deserialiseUsing(_.parseChangelog) must be_==(
-        Changelog(
-          total = 2,
-          changelog = Seq(
+        Changelog(Seq(
             ChangelogItem(
               parentRelativePath = "Q/Queen/Flash Gordon",
               at = "2017-03-13T22:05:06.000Z",
