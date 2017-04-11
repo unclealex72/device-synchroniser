@@ -42,9 +42,9 @@ class CirceCodec extends JsonCodec {
           actionField <- obj("action")
           fieldValue <- actionField.asString if fieldValue == action
         } yield {}).isDefined}, action)
-    Decoder.failedWithMessage[Change]("").
-      or(predicatedDecoder("added", decodeAddition)).
-      or(predicatedDecoder("removed", decodeRemoval))
+    Decoder.failedWithMessage[Change]("Could not find a valid action type").
+      or(predicatedDecoder("removed", decodeRemoval)).
+      or(predicatedDecoder("added", decodeAddition))
   }
 
   implicit val decodeChanges: Decoder[Changes] = Decoder.forProduct1("changes")(Changes.apply)

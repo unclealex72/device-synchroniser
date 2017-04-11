@@ -3,6 +3,8 @@ package devsync.json
 import java.text.{DateFormat, SimpleDateFormat}
 import java.util.Date
 
+import org.fourthline.cling.model.ModelUtil
+
 import scala.util.Try
 
 /**
@@ -17,7 +19,8 @@ case class IsoDate(date: Date, fmt: String) {
 
 object IsoDate {
 
-  private def df(): DateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+  private val formatString: String = "yyyy-MM-dd'T'HH:mm:ss.SSS" + (if (ModelUtil.ANDROID_RUNTIME) "Z" else "X")
+  private def df(): DateFormat = new SimpleDateFormat(formatString)
 
   def apply(date: Date): IsoDate = {
     IsoDate(date, df().format(date))

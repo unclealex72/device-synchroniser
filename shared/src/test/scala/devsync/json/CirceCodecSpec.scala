@@ -44,7 +44,7 @@ class CirceCodecSpec extends Specification {
 
   "Reading a list of changes" should {
     "be able to read how many changes occurred" in {
-      "changes.json".deserialiseUsing(_.parseChanges).changes.size must be_==(19)
+      "changes.json".deserialiseUsing(_.parseChanges).changes.size must be_==(29)
     }
   }
 

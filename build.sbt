@@ -59,7 +59,12 @@ lazy val scalafx = (project in file("scalafx"))
     organization := Settings.organisation,
     name := "device-synchroniser-scalafx",
     version := (version in ThisBuild).value,
-    scalaVersion := Settings.versions.scala
+    scalaVersion := Settings.versions.scala,
+    fork in run := true,
+    libraryDependencies ++= Seq(
+      "org.scalafx" %% "scalafx" % "8.0.102-R11",
+      "ch.qos.logback" % "logback-classic" % "1.1.7"
+    )
 	).dependsOn(shared)
 
 versionCode := Some(1)

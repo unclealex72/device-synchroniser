@@ -52,23 +52,24 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
   private def processDeviceDescriptor(maybeDeviceUri: Option[String]): Unit = {
     implicit val resourceStreamProvider: DocumentFileResourceStreamProvider = new DocumentFileResourceStreamProvider()
     val device = Services.device
-    val maybeDeviceResourceAndUri: Option[(DocumentFile, String)] = for {
+    val maybeDeviceResource: Option[DocumentFile] = for {
       uri <- maybeDeviceUri
       deviceResource <- Some(DocumentFile.fromTreeUri(this, Uri.parse(uri)))
-    } yield (deviceResource, uri)
-      val tryDeviceDescriptorAndUri =
-        device.findDeviceDescriptor(maybeDeviceResourceAndUri.map(_._1)).map { deviceDescriptor =>
-          DeviceDescriptorAndUri(deviceDescriptor, maybeDeviceResourceAndUri.map(_._2).getOrElse(""))
-        }
-      tryDeviceDescriptorAndUri match {
-        case Left(e) =>
-          Ui.run((findDeviceButton <~ show) ~ (errorMessage <~ text(e.getMessage) <~ show))
-        case Right(deviceDescriptorAndUri) =>
-          Ui.run(progressBar <~ show).flatMap { _ => Services.flacManagerDiscovery.discover }.onCompleteUi {
-            case Success(url) => Ui(next(deviceDescriptorAndUri, url.toString))
-            case Failure(e) => errorMessage <~ text(e.getMessage) <~ show
-          }
+    } yield deviceResource
+    val tryDeviceDescriptorAndUri =
+      device.findDeviceDescriptor(maybeDeviceResource).map {
+        case (deviceDescriptor, documentRoot) =>
+          DeviceDescriptorAndUri(deviceDescriptor, documentRoot.getUri.toString)
       }
+    tryDeviceDescriptorAndUri match {
+      case Left(e) =>
+        Ui.run((findDeviceButton <~ show) ~ (errorMessage <~ text(e.getMessage) <~ show))
+      case Right(deviceDescriptorAndUri) =>
+        Ui.run(progressBar <~ show).flatMap { _ => Services.flacManagerDiscovery.discover }.onCompleteUi {
+          case Success(url) => Ui(next(deviceDescriptorAndUri, url.toString))
+          case Failure(e) => errorMessage <~ text(e.getMessage) <~ show
+        }
+    }
   }
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {

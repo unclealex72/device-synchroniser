@@ -30,7 +30,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
                            ec: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]] = {
     Future(deviceListener.synchronisingStarting())
     findDeviceDescriptor(Seq(root)) match {
-      case Right(deviceDescriptor) =>
+      case Right((deviceDescriptor, _)) =>
         new Synchroniser(root, changesClient, deviceListener, deviceDescriptor).synchronise.map { result =>
           result.leftMap(ewmi => (ewmi.e, ewmi.maybeIdx))
         }
@@ -209,7 +209,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
 
   override def findDeviceDescriptor(roots: Iterable[R])
                                    (implicit resource: Resource[R],
-                                    resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor] = {
+                                    resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, (DeviceDescriptor, R)] = {
     def findDeviceDescriptorResource(root: R): Either[Exception, R] = {
       resource.find(root, RelativePath(DESCRIPTOR_FILENAME)) match {
         case Some(deviceDescriptorResource) => Right(deviceDescriptorResource)
@@ -232,7 +232,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
       }
     }
 
-    val empty: Either[Exception, DeviceDescriptor] = Left(new RuntimeException("No resources supplied"))
+    val empty: Either[Exception, (DeviceDescriptor, R)] = Left(new RuntimeException("No resources supplied"))
     roots.foldLeft(empty) { (acc, root) =>
       acc.recoverWith {
         // If the previous attempt at finding a device descriptor failed, go to the next one.
@@ -240,7 +240,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
           deviceDescriptorResource <- findDeviceDescriptorResource(root)
           _ <- canWriteDeviceDescriptorResource(deviceDescriptorResource)
           deviceDescriptor <- readDeviceDescriptor(deviceDescriptorResource)
-        } yield deviceDescriptor
+        } yield (deviceDescriptor, root)
       }
     }
   }

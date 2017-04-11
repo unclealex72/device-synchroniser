@@ -29,4 +29,5 @@ case class Tags(
     }
   }
 
+  def formattedTrack: String = s"$trackNumber/$totalTracks - $title"
 }

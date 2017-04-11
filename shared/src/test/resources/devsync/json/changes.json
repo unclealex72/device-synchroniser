@@ -7,12 +7,82 @@
     },
     {
       "action": "added",
+      "relativePath": "A/Anthrax/Persistence of Time/01 Time.mp3",
+      "at": "2017-04-09T07:37:58.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/A/Anthrax/Persistence+of+Time/01+Time.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/A/Anthrax/Persistence+of+Time/01+Time.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/A/Anthrax/Persistence+of+Time"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "B/Black Sabbath/Paranoid 01/01 War Pigs.mp3",
+      "at": "2017-04-02T10:50:54.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/B/Black+Sabbath/Paranoid+01/01+War+Pigs.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/B/Black+Sabbath/Paranoid+01/01+War+Pigs.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/B/Black+Sabbath/Paranoid+01"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "C/Carcass/Heartwork/01 Buried Dreams.mp3",
+      "at": "2017-04-02T10:50:44.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/C/Carcass/Heartwork/01+Buried+Dreams.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/C/Carcass/Heartwork/01+Buried+Dreams.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/C/Carcass/Heartwork"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "I/Iron Maiden/Powerslave/01 Aces High.mp3",
+      "at": "2017-04-09T07:38:11.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/I/Iron+Maiden/Powerslave/01+Aces+High.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/I/Iron+Maiden/Powerslave/01+Aces+High.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/I/Iron+Maiden/Powerslave"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "J/Janes Addiction/Ritual de lo habitual/01 Stop.mp3",
+      "at": "2017-04-02T10:50:45.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/J/Janes+Addiction/Ritual+de+lo+habitual/01+Stop.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/J/Janes+Addiction/Ritual+de+lo+habitual/01+Stop.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/J/Janes+Addiction/Ritual+de+lo+habitual"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "M/Metallica/Master of Puppets/01 Battery.mp3",
+      "at": "2017-04-02T10:50:49.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/M/Metallica/Master+of+Puppets/01+Battery.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/M/Metallica/Master+of+Puppets/01+Battery.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/M/Metallica/Master+of+Puppets"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "M/Muse/The 2nd Law/01 Supremacy.mp3",
+      "at": "2017-04-02T10:50:46.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/M/Muse/The+2nd+Law/01+Supremacy.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/M/Muse/The+2nd+Law/01+Supremacy.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/M/Muse/The+2nd+Law"
+      }
+    },
+    {
+      "action": "added",
       "relativePath": "Q/Queen/Flash Gordon/01 Flashs Theme.mp3",
       "at": "2017-03-13T22:05:16.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/01 Flashs Theme.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/01 Flashs Theme.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/01 Flashs Theme.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/01+Flashs+Theme.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/01+Flashs+Theme.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -20,9 +90,9 @@
       "relativePath": "Q/Queen/Flash Gordon/02 In the Space Capsule The Love Theme.mp3",
       "at": "2017-03-13T22:05:13.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/02 In the Space Capsule The Love Theme.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/02 In the Space Capsule The Love Theme.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/02 In the Space Capsule The Love Theme.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/02+In+the+Space+Capsule+The+Love+Theme.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/02+In+the+Space+Capsule+The+Love+Theme.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -30,9 +100,9 @@
       "relativePath": "Q/Queen/Flash Gordon/03 Mings Theme In the Court of Ming the Merciless.mp3",
       "at": "2017-03-13T22:05:15.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/03 Mings Theme In the Court of Ming the Merciless.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/03 Mings Theme In the Court of Ming the Merciless.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/03 Mings Theme In the Court of Ming the Merciless.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/03+Mings+Theme+In+the+Court+of+Ming+the+Merciless.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/03+Mings+Theme+In+the+Court+of+Ming+the+Merciless.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -40,9 +110,9 @@
       "relativePath": "Q/Queen/Flash Gordon/04 The Ring Hypnotic Seduction of Dale.mp3",
       "at": "2017-03-13T22:05:06.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/04 The Ring Hypnotic Seduction of Dale.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/04 The Ring Hypnotic Seduction of Dale.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/04 The Ring Hypnotic Seduction of Dale.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/04+The+Ring+Hypnotic+Seduction+of+Dale.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/04+The+Ring+Hypnotic+Seduction+of+Dale.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -50,9 +120,9 @@
       "relativePath": "Q/Queen/Flash Gordon/05 Football Fight.mp3",
       "at": "2017-03-13T22:05:06.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/05 Football Fight.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/05 Football Fight.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/05 Football Fight.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/05+Football+Fight.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/05+Football+Fight.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -60,9 +130,9 @@
       "relativePath": "Q/Queen/Flash Gordon/06 In the Death Cell Love Theme reprise.mp3",
       "at": "2017-03-13T22:05:12.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/06 In the Death Cell Love Theme reprise.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/06 In the Death Cell Love Theme reprise.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/06 In the Death Cell Love Theme reprise.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/06+In+the+Death+Cell+Love+Theme+reprise.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/06+In+the+Death+Cell+Love+Theme+reprise.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -70,9 +140,9 @@
       "relativePath": "Q/Queen/Flash Gordon/07 Execution of Flash.mp3",
       "at": "2017-03-13T22:05:06.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/07 Execution of Flash.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/07 Execution of Flash.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/07 Execution of Flash.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/07+Execution+of+Flash.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/07+Execution+of+Flash.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -80,9 +150,9 @@
       "relativePath": "Q/Queen/Flash Gordon/08 The Kiss Aura Resurrects Flash.mp3",
       "at": "2017-03-13T22:05:09.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/08 The Kiss Aura Resurrects Flash.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/08 The Kiss Aura Resurrects Flash.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/08 The Kiss Aura Resurrects Flash.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/08+The+Kiss+Aura+Resurrects+Flash.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/08+The+Kiss+Aura+Resurrects+Flash.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -90,9 +160,9 @@
       "relativePath": "Q/Queen/Flash Gordon/09 Arboria Planet of the Tree Men.mp3",
       "at": "2017-03-13T22:05:24.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/09 Arboria Planet of the Tree Men.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/09 Arboria Planet of the Tree Men.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/09 Arboria Planet of the Tree Men.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/09+Arboria+Planet+of+the+Tree+Men.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/09+Arboria+Planet+of+the+Tree+Men.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -100,9 +170,9 @@
       "relativePath": "Q/Queen/Flash Gordon/10 Escape From the Swamp.mp3",
       "at": "2017-03-13T22:05:18.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/10 Escape From the Swamp.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/10 Escape From the Swamp.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/10 Escape From the Swamp.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/10+Escape+From+the+Swamp.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/10+Escape+From+the+Swamp.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -110,9 +180,9 @@
       "relativePath": "Q/Queen/Flash Gordon/11 Flash to the Rescue.mp3",
       "at": "2017-03-13T22:05:25.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/11 Flash to the Rescue.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/11 Flash to the Rescue.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/11 Flash to the Rescue.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/11+Flash+to+the+Rescue.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/11+Flash+to+the+Rescue.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -120,9 +190,9 @@
       "relativePath": "Q/Queen/Flash Gordon/12 Vultans Theme Attack of the Hawk Men.mp3",
       "at": "2017-03-13T22:05:12.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/12 Vultans Theme Attack of the Hawk Men.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/12 Vultans Theme Attack of the Hawk Men.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/12 Vultans Theme Attack of the Hawk Men.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/12+Vultans+Theme+Attack+of+the+Hawk+Men.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/12+Vultans+Theme+Attack+of+the+Hawk+Men.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -130,9 +200,9 @@
       "relativePath": "Q/Queen/Flash Gordon/13 Battle Theme.mp3",
       "at": "2017-03-13T22:05:18.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/13 Battle Theme.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/13 Battle Theme.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/13 Battle Theme.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/13+Battle+Theme.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/13+Battle+Theme.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -140,9 +210,9 @@
       "relativePath": "Q/Queen/Flash Gordon/14 The Wedding March.mp3",
       "at": "2017-03-13T22:05:16.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/14 The Wedding March.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/14 The Wedding March.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/14 The Wedding March.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/14+The+Wedding+March.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/14+The+Wedding+March.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -150,9 +220,9 @@
       "relativePath": "Q/Queen/Flash Gordon/15 Marriage of Dale and Ming and Flash Approaching.mp3",
       "at": "2017-03-13T22:05:16.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/15 Marriage of Dale and Ming and Flash Approaching.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/15 Marriage of Dale and Ming and Flash Approaching.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/15 Marriage of Dale and Ming and Flash Approaching.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/15+Marriage+of+Dale+and+Ming+and+Flash+Approaching.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/15+Marriage+of+Dale+and+Ming+and+Flash+Approaching.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -160,9 +230,9 @@
       "relativePath": "Q/Queen/Flash Gordon/16 Crash Dive on Mingo City.mp3",
       "at": "2017-03-13T22:05:14.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/16 Crash Dive on Mingo City.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/16 Crash Dive on Mingo City.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/16 Crash Dive on Mingo City.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/16+Crash+Dive+on+Mingo+City.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/16+Crash+Dive+on+Mingo+City.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -170,9 +240,9 @@
       "relativePath": "Q/Queen/Flash Gordon/17 Flashs Theme Reprise Victory Celebrations.mp3",
       "at": "2017-03-13T22:05:27.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/17 Flashs Theme Reprise Victory Celebrations.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/17 Flashs Theme Reprise Victory Celebrations.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/17 Flashs Theme Reprise Victory Celebrations.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/17+Flashs+Theme+Reprise+Victory+Celebrations.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/17+Flashs+Theme+Reprise+Victory+Celebrations.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
       }
     },
     {
@@ -180,9 +250,39 @@
       "relativePath": "Q/Queen/Flash Gordon/18 The Hero.mp3",
       "at": "2017-03-13T22:05:28.000Z",
       "_links": {
-        "music": "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/18 The Hero.mp3",
-        "tags": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/18 The Hero.mp3",
-        "artwork": "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/18 The Hero.mp3"
+        "music": "http://192.168.1.125:9000/music/alex/Q/Queen/Flash+Gordon/18+The+Hero.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/Q/Queen/Flash+Gordon/18+The+Hero.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/Q/Queen/Flash+Gordon"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "R/Red Hot Chili Peppers/Blood Sugar Sex Magik/01 The Power of Equality.mp3",
+      "at": "2017-04-02T10:50:45.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/R/Red+Hot+Chili+Peppers/Blood+Sugar+Sex+Magik/01+The+Power+of+Equality.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/R/Red+Hot+Chili+Peppers/Blood+Sugar+Sex+Magik/01+The+Power+of+Equality.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/R/Red+Hot+Chili+Peppers/Blood+Sugar+Sex+Magik"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "S/Slayer/Reign in Blood/01 Angel of Death.mp3",
+      "at": "2017-04-02T10:51:06.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/S/Slayer/Reign+in+Blood/01+Angel+of+Death.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/S/Slayer/Reign+in+Blood/01+Angel+of+Death.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/S/Slayer/Reign+in+Blood"
+      }
+    },
+    {
+      "action": "added",
+      "relativePath": "S/System of a Down/Mezmerize/01 Soldier Side intro.mp3",
+      "at": "2017-04-02T10:50:56.000+01:00",
+      "_links": {
+        "music": "http://192.168.1.125:9000/music/alex/S/System+of+a+Down/Mezmerize/01+Soldier+Side+intro.mp3",
+        "tags": "http://192.168.1.125:9000/tags/alex/S/System+of+a+Down/Mezmerize/01+Soldier+Side+intro.mp3",
+        "artwork": "http://192.168.1.125:9000/artwork/alex/S/System+of+a+Down/Mezmerize"
       }
     }
   ]

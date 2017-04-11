@@ -41,34 +41,45 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     super.onCreate(savedInstanceState)
     setContentView(R.layout.device_synchroniser_activity)
     val rootView = findViewById(R.id.content)
-    Transformer {
-      case LastUpdatedView(t) => t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
-      case ChangeCountView(t) => t <~ text(Messages.Changes.changes(0))
-      case SynchroniseButtonView(b) => b <~ disable <~ On.click {
-        val synchroniseIntent = new Intent(this, classOf[SynchroniseService])
-        synchroniseIntent.put(deviceDescriptor, resourceUri, serverUrl)
-        this.startService(synchroniseIntent)
-        toast(Messages.Changes.synchronisationStarted) <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
-      }
-    }(rootView).get
-    val changesClient = Services.changesClient(new URL(serverUrl))
-    populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).
-      filter(changelog => changelog.items.nonEmpty).mapUi { changelog =>
+    def setupGui(): Ui[_] = {
       Transformer {
-        case ChangesContainerView(rv) =>
-          rv.setLayoutManager {
-            val llm = new LinearLayoutManager(this)
-            llm.setOrientation(LinearLayoutManager.VERTICAL)
-            llm
-          }
-          rv.setHasFixedSize(true)
-          rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
-          rv <~ show
-        case ChangeCountView(t) => t <~ text(Messages.Changes.changes(changelog.items.size))
-        case SynchroniseButtonView(b) => b <~ enable
+        case LastUpdatedView(t) => t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
+        case ChangeCountView(t) => t <~ text(Messages.Changes.changes(0))
+        case SynchroniseButtonView(b) => b <~ disable <~ On.click {
+          val synchroniseIntent = new Intent(this, classOf[SynchroniseService])
+          synchroniseIntent.put(deviceDescriptor, resourceUri, serverUrl)
+          this.startService(synchroniseIntent)
+          toast(Messages.Changes.synchronisationStarted) <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
+        }
       }(rootView)
     }
+    def updateChangelog(): Future[_] = {
+      val changesClient = Services.changesClient(new URL(serverUrl))
+      populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).mapUi {
+        case Right(changelog) if changelog.items.nonEmpty =>
+          Transformer {
+            case ChangesContainerView(rv) =>
+              rv.setLayoutManager {
+                val llm = new LinearLayoutManager(this)
+                llm.setOrientation(LinearLayoutManager.VERTICAL)
+                llm
+              }
+              rv.setHasFixedSize(true)
+              rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
+              rv <~ show
+            case ChangeCountView(t) => t <~ text(Messages.Changes.changes(changelog.items.size))
+            case SynchroniseButtonView(b) => b <~ enable
+          }(rootView)
+        case Right(changelog) if changelog.items.isEmpty =>
+          dialog("Empty")
+        case Left(e) =>
+          logger.error("Could not get the list of changes.", e)
+          dialog(e.getMessage)
+      }
+    }
+    setupGui().run.flatMap(_ => updateChangelog())
   }
+
 
   class ChangelogItemAdapter(changesClient: ChangesClient, changelog: Changelog) extends RecyclerView.Adapter[AlbumViewHolder] {
     override def getItemCount: Int = changelog.items.size
@@ -126,8 +137,8 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     val timeText: Ui[Option[TextView]] = view.find[TextView](R.id.time_text_view)
   }
 
-  def populateChangelog(changesClient: ChangesClient, user: String, maybeLastModified: Option[IsoDate]): Future[Changelog] = Future {
-    changesClient.changelogSince(user, maybeLastModified).getOrElse(Changelog(Seq.empty))
+  def populateChangelog(changesClient: ChangesClient, user: String, maybeLastModified: Option[IsoDate]): Future[Either[Exception, Changelog]] = Future {
+    changesClient.changelogSince(user, maybeLastModified)
   }
 
   // Extractors for the different view components

@@ -18,7 +18,7 @@ trait Device[R] {
 
   def findDeviceDescriptor(roots: Iterable[R])
                           (implicit resource: Resource[R],
-                           resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor]
+                           resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, (DeviceDescriptor, R)]
 }
 
 trait DeviceListener[R] {
