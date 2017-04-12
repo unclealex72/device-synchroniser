@@ -9,6 +9,7 @@ import scalafx.collections.ObservableBuffer
 import scalafx.scene.control.{Label, TableCell, TableColumn, TableView}
 import scalafx.scene.image.ImageView
 import scalafx.scene.layout.VBox
+import devsync.scalafx.ObservableValues._
 
 /**
   * An object to encapsulate the creation of the changelog table.
@@ -16,17 +17,17 @@ import scalafx.scene.layout.VBox
   **/
 object ChangelogTable {
 
-  def apply(items: ObservableBuffer[ReadOnlyChangelogItem]): TableView[ReadOnlyChangelogItem] = {
-    val descriptionColumn = new TableColumn[ReadOnlyChangelogItem, Seq[String]] {
-      cellValueFactory = {
-        _.value.description
+  def apply(items: ObservableBuffer[ChangelogRow]): TableView[ChangelogRow] = {
+    val descriptionColumn = new TableColumn[ChangelogRow, Seq[String]] {
+      cellValueFactory = { cdf =>
+        new ReadOnlyObjectProperty[Seq[String]](this, "description", cdf.value.description)
       }
       sortable = false
       cellFactory = { _ =>
-        new TableCell[ReadOnlyChangelogItem, Seq[String]] {
-          item.onChange { (_, _, description) =>
+        new TableCell[ChangelogRow, Seq[String]] {
+          item.onAltered { description =>
             val vbox = new VBox {
-              children = Option(description).getOrElse(Seq.empty).map(line => new Label { text = line })
+              children = description.map(line => new Label { text = line })
             }
             graphic = vbox
           }
@@ -35,9 +36,9 @@ object ChangelogTable {
       prefWidth = 180
     }
 
-    val imageColumn = new TableColumn[ReadOnlyChangelogItem, Option[Array[Byte]]] {
-      cellValueFactory = {
-        _.value.artwork
+    val imageColumn = new TableColumn[ChangelogRow, Option[Array[Byte]]] {
+      cellValueFactory = { cdf =>
+        new ReadOnlyObjectProperty[Option[Array[Byte]]](this, "artwork", cdf.value.artwork)
       }
       sortable = false
       cellFactory = { _ =>
@@ -45,7 +46,7 @@ object ChangelogTable {
           fitWidth = 50
           fitHeight = 50
         }
-        new TableCell[ReadOnlyChangelogItem, Option[Array[Byte]]] {
+        new TableCell[ChangelogRow, Option[Array[Byte]]] {
           graphic = imageView
           item.onChange { (_, _, maybeData) =>
             imageView.image = Artwork(Option(maybeData).flatten)
@@ -55,19 +56,15 @@ object ChangelogTable {
       prefWidth = 180
     }
 
-    val tableView = new TableView[ReadOnlyChangelogItem] {
+    val tableView = new TableView[ChangelogRow] {
       columns ++= List(imageColumn, descriptionColumn)
     }
     tableView.delegate.setItems(
-      new SortedList[ReadOnlyChangelogItem](
+      new SortedList[ChangelogRow](
         items,
-        Ordering.by(i => -i._modificationDate.date.getTime)))
+        Ordering.by(i => -i.modificationDate.date.getTime)))
     tableView
   }
 }
 
-case class ReadOnlyChangelogItem(_artwork: Option[Array[Byte]], _description: Seq[String], _modificationDate: IsoDate) {
-  val artwork = new ReadOnlyObjectProperty[Option[Array[Byte]]](this, "artwork", _artwork)
-  val description = new ReadOnlyObjectProperty[Seq[String]](this, "artwork", _description)
-  val modificationDate = new ReadOnlyObjectProperty[IsoDate](this, "modificationDate", _modificationDate)
-}
+case class ChangelogRow(artwork: Option[Array[Byte]], description: Seq[String], modificationDate: IsoDate)

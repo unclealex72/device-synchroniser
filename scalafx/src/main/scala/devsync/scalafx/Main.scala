@@ -30,6 +30,7 @@ import scalafx.concurrent.{Task, WorkerStateEvent}
 import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.image.{Image, ImageView}
 import scalafx.stage.{Modality, Stage}
+import devsync.scalafx.ObservableValues._
 
 object Main extends JFXApp with StrictLogging {
 
@@ -49,7 +50,7 @@ object Main extends JFXApp with StrictLogging {
   }
 
   def initialise() : Unit = {
-    val startUpWorker: Task[(URL, Path, DeviceDescriptor)] = Tasks.fromFuture {
+    val startUpWorker: Task[(URL, Path, DeviceDescriptor)] = ConstantProgressTask.fromFuture {
       for {
         serverUrl <- findServerUrl()
         (deviceDescriptorAndRoot) <- findDeviceDescriptor()
@@ -73,7 +74,7 @@ object Main extends JFXApp with StrictLogging {
           stage.close()
       }
     }
-    startUpWorker.value.onChange { (_, _, serverUrlRootAndDeviceDescriptor) =>
+    startUpWorker.value.onAltered { serverUrlRootAndDeviceDescriptor =>
       val (serverUrl, root, deviceDescriptor) = serverUrlRootAndDeviceDescriptor
       generateGui(serverUrl, root, deviceDescriptor)
     }
@@ -104,7 +105,6 @@ object Main extends JFXApp with StrictLogging {
   def generateGui(url: URL, root: Path, deviceDescriptor: DeviceDescriptor): Unit = {
 
     val changesClient = Services.changesClient(url)
-    val device = Services.device
 
     val synchroniseButton = new Button("Synchronise") {
 
@@ -117,9 +117,9 @@ object Main extends JFXApp with StrictLogging {
     val changelogCount = new Label {
     }
 
-    val changelogItems = new ObservableBuffer[ReadOnlyChangelogItem]()
+    val changelogRows = new ObservableBuffer[ChangelogRow]()
 
-    val changelogTask = Tasks.fromFuture[Unit] {
+    val changelogTask = ConstantProgressTask.fromFuture[ChangelogRow, Int] { updates: TaskUpdates[ChangelogRow, Int] =>
       EitherT(Future(changesClient.changelogSince(deviceDescriptor.user, deviceDescriptor.maybeLastModified))).map { changelog =>
         changelog.items.foreach { item =>
           val eventualMaybeArtwork = Future {
@@ -137,14 +137,16 @@ object Main extends JFXApp with StrictLogging {
             maybeArtwork <- eventualMaybeArtwork
             description <- eventualDescription
           } yield {
-            Platform.runLater(changelogItems += ReadOnlyChangelogItem(maybeArtwork, description, item.at))
+            updates.updateIntermediateValue(Some(ChangelogRow(maybeArtwork, description, item.at)))
           }
         }
+        changelog.items.length
       }
     }
 
-    changelogItems.onChange { (newChangelogItems, _) =>
-      val (disableSyncButton, countText) = newChangelogItems.size match {
+    changelogTask.intermediateValue.onAltered { maybeChangelogRow => changelogRows ++= maybeChangelogRow }
+    changelogTask.value.onAltered { count =>
+      val (disableSyncButton, countText) = count match {
         case 0 => (true, "There are no changes")
         case 1 => (false, "There is 1 change")
         case x => (false, s"There are $x changes")
@@ -174,7 +176,7 @@ object Main extends JFXApp with StrictLogging {
       root = Anchor.fill {
         new BorderPane {
           top = topPane
-          center = Anchor.fill(ChangelogTable(changelogItems))
+          center = Anchor.fill(ChangelogTable(changelogRows))
           bottom = actionButtonBar
         }
       }
@@ -221,16 +223,15 @@ object Main extends JFXApp with StrictLogging {
 
     val currentTrack = ObjectProperty(Track())
 
-    val synchroniseTask = Tasks.fromFuture[Int] { (task: TaskUpdates[Int]) =>
+    val synchroniseTask = ConstantProgressTask.fromFuture[Track, Int] { updates: TaskUpdates[Track, Int] =>
       val changesClient = Services.changesClient(url)
       val deviceListener = new DeviceListener[Path] {
 
         def track(relativePath: RelativePath, maybeDescription: Option[Seq[String]], maybeArtwork: Option[Array[Byte]], number: Int, total: Int): Unit = {
-          task.updateProgress(number, total)
+          updates.updateProgress(number, total)
           val description = maybeDescription.getOrElse(Seq(relativePath.toString))
-          Platform.runLater {
-            currentTrack.set(Track(maybeArtwork, description))
-          }
+          updates.updateIntermediateValue(Some(Track(maybeArtwork, description)))
+
         }
 
         override def addingMusic(addition: Addition, maybeTags: Option[Tags], maybeArtwork: Option[Array[Byte]], number: Int, total: Int): Unit = {
@@ -256,6 +257,9 @@ object Main extends JFXApp with StrictLogging {
         override def synchronisingFinished(count: Int): Unit = {}
       }
       EitherT(device.synchronise(root, changesClient, deviceListener)).leftMap(_._1)
+    }
+    synchroniseTask.intermediateValue.onAltered { maybeCurrentTrack =>
+      maybeCurrentTrack.foreach(currentTrack.value = _)
     }
     val artworkView = new ImageView {
       image = Artwork(None)
