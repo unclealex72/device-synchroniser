@@ -1,4 +1,4 @@
-package devsync.scalafx
+package devsync.scalafx.util
 
 import java.net.URL
 import java.nio.file.Path
@@ -6,6 +6,7 @@ import java.nio.file.Path
 import devsync.discovery.{ClingFlacManagerDiscovery, FlacManagerDiscovery}
 import devsync.json._
 import devsync.remote.{ChangesClient, ChangesClientImpl}
+import devsync.scalafx.sync.{DeviceDiscoverer, DeviceDiscovererImpl}
 import devsync.sync._
 import org.fourthline.cling.DefaultUpnpServiceConfiguration
 
@@ -18,6 +19,7 @@ object Services {
   val isoClock: IsoClock = SystemIsoClock
   val flacManagerDiscovery: FlacManagerDiscovery = new ClingFlacManagerDiscovery(new DefaultUpnpServiceConfiguration())
   val device: Device[Path] = new DeviceImpl[Path](jsonCodec, isoClock)
+  val deviceDiscoverer: DeviceDiscoverer = new DeviceDiscovererImpl(device)
   def changesClient(url: URL): ChangesClient = new ChangesClientImpl(jsonCodec, url)
 
 }

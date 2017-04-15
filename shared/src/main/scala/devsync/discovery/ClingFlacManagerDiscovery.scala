@@ -1,6 +1,7 @@
 package devsync.discovery
 import java.net.URL
 
+import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
 import org.fourthline.cling.{UpnpService, UpnpServiceConfiguration, UpnpServiceImpl}
 import org.fourthline.cling.model.message.header.UDADeviceTypeHeader
@@ -21,7 +22,10 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
     *
     * @return A future eventually containing the root url or an error.
     */
-  override def discover(implicit ec: ExecutionContext): Future[URL] = {
+  override def discover(implicit ec: ExecutionContext): EitherT[Future, Exception, URL] = {
+
+    import cats.instances.future.catsStdInstancesForFuture
+
     val eventualAnswer: Promise[URL] = Promise()
 
     val udaType = new UDADeviceType("FlacManager")
@@ -36,11 +40,13 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
     }
     val upnpService: UpnpService = new UpnpServiceImpl(upnpServiceConfiguration, listener)
     upnpService.getControlPoint.search(new UDADeviceTypeHeader(udaType))
-    eventualAnswer.future.map { url =>
-      Future {
-        upnpService.shutdown()
+    EitherT.right {
+      eventualAnswer.future.map { url =>
+        Future {
+          upnpService.shutdown()
+        }
+        url
       }
-      url
     }
   }
 }

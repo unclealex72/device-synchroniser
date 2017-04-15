@@ -1,4 +1,4 @@
-package devsync.scalafx
+package devsync.scalafx.util
 
 import java.io.{InputStream, OutputStream}
 import java.nio.file.{FileAlreadyExistsException, Files, Path}

@@ -1,4 +1,4 @@
-package devsync.scalafx
+package devsync.scalafx.util
 
 import javafx.{concurrent => jfxc}
 
@@ -9,6 +9,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scalafx.application.Platform
 import scalafx.beans.property.{ObjectProperty, ReadOnlyObjectProperty}
 import scalafx.concurrent.Task
+import cats.instances.future._
 
 /**
   * A task that can emit intermediate values as it progresses. The type of the intermediate value does not
@@ -46,8 +47,6 @@ object ConstantProgressTask {
           override def updateIntermediateValue(t: Option[T]): Unit = _updateIntermediateValue(t)
           override def updateValue(v: V): Unit = task.updateValue(v)
         }
-        // Declare here as Intellij doesn't recognise it as being used if imported.
-        implicit val functor = cats.instances.future.catsStdInstancesForFuture(ec)
         Await.result(futureFactory(taskUpdates).fold(e => throw e, v => v), Duration.Inf)
       }
     }) {
@@ -71,4 +70,17 @@ trait TaskUpdates[T, V] {
   def updateTitle(title: String): Unit
   def updateIntermediateValue(t: Option[T]): Unit
   def updateValue(v: V): Unit
+
+  def updateMessageF(message: String)(implicit ec: ExecutionContext): EitherT[Future, Exception, Unit] =
+    EitherT.right[Future, Exception, Unit](Future.successful(updateMessage(message)))
+  def updateProgressF(workDone: Long, max: Long)(implicit ec: ExecutionContext): EitherT[Future, Exception, Unit] =
+    EitherT.right[Future, Exception, Unit](Future.successful(updateProgress(workDone, max)))
+  def updateProgressF(workDone: Double, max: Double)(implicit ec: ExecutionContext): EitherT[Future, Exception, Unit] =
+    EitherT.right[Future, Exception, Unit](Future.successful(updateProgress(workDone, max)))
+  def updateTitleF(title: String)(implicit ec: ExecutionContext): EitherT[Future, Exception, Unit] =
+    EitherT.right[Future, Exception, Unit](Future.successful(updateTitle(title)))
+  def updateIntermediateValueF(t: Option[T])(implicit ec: ExecutionContext): EitherT[Future, Exception, Unit] =
+    EitherT.right[Future, Exception, Unit](Future.successful(updateIntermediateValue(t)))
+  def updateValueF(v: V)(implicit ec: ExecutionContext): EitherT[Future, Exception, Unit] =
+    EitherT.right[Future, Exception, Unit](Future.successful(updateValue(v)))
 }

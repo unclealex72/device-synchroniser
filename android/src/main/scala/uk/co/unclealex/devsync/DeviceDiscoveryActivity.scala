@@ -65,7 +65,7 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
       case Left(e) =>
         Ui.run((findDeviceButton <~ show) ~ (errorMessage <~ text(e.getMessage) <~ show))
       case Right(deviceDescriptorAndUri) =>
-        Ui.run(progressBar <~ show).flatMap { _ => Services.flacManagerDiscovery.discover }.onCompleteUi {
+        Ui.run(progressBar <~ show).flatMap { _ => Services.flacManagerDiscovery.discover.value }.onCompleteUi {
           case Success(url) => Ui(next(deviceDescriptorAndUri, url.toString))
           case Failure(e) => errorMessage <~ text(e.getMessage) <~ show
         }

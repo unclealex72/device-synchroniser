@@ -1,4 +1,4 @@
-package devsync.scalafx
+package devsync.scalafx.util
 
 import java.io.ByteArrayInputStream
 
@@ -16,4 +16,6 @@ object Artwork {
       case _ => new Image("/no_artwork.png")
     }
   }
+
+  def empty: Image = apply(None)
 }
