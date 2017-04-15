@@ -26,7 +26,7 @@ object ChangelogView extends StrictLogging {
   /**
     * Order children by newest first
     */
-  val changelogItemModelOrdering: Ordering[Node with ChangelogItemView] = Ordering.by(_.model.value.at.date.getTime)
+  val changelogItemModelOrdering: Ordering[Node with ChangelogItemView] = Ordering.by(-_.model.value.at.date.getTime)
 
   def apply(models: ObservableSet[ChangelogItemModel])(implicit defaultFont: Font): Node with ChangelogView = {
     val children = ObservableBuffer.empty[Node with ChangelogItemView]
