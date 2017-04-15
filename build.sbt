@@ -74,7 +74,8 @@ lazy val scalafx = (project in file("scalafx"))
     libraryDependencies ++= Seq(
       "org.scalafx" %% "scalafx" % Settings.versions.scalafx,
       "ch.qos.logback" % "logback-classic" % "1.1.7"
-    )
+    ),
+    maintainer in Debian := "alex.jones@unclealex.co.uk"
 	)
   .dependsOn(shared)
   .enablePlugins(JavaAppPackaging, DebianPlugin)
