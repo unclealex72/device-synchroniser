@@ -20,7 +20,7 @@ import scalafx.collections.ObservableSet
 import scalafx.concurrent.Task
 import scalafx.scene.Parent
 import scalafx.scene.text.Font
-
+import scalafx.Includes._
 /**
   * Created by alex on 14/04/17
   **/
@@ -66,6 +66,9 @@ case class ChangelogPresenter(
 
   changelogTask.intermediateValue.onAltered { maybeItem =>
     items ++= maybeItem
+  }
+  changelogTask.onSucceeded = handle {
+    deviceInformationView.ready = true
   }
 
   def content(): Parent = deviceInformationView

@@ -11,11 +11,19 @@ import scalafx.scene.control.{Button, Label, ScrollPane}
 import scalafx.scene.layout.BorderPane
 import scalafx.scene.text.Font
 import scalafx.Includes._
+import scalafx.beans.property.BooleanProperty
 import scalafx.geometry.Insets
+import devsync.scalafx.util.ObservableValues._
+
 /**
   * Created by alex on 14/04/17
   **/
 trait DeviceInformationView {
+
+  def ready: BooleanProperty
+  def ready_=(b: Boolean): Unit = {
+    ready() = b
+  }
 }
 
 object DeviceInformationView {
@@ -31,10 +39,13 @@ object DeviceInformationView {
       onAction = handle(synchroniseCallback)
       font = defaultFont
     }
+    val _ready = BooleanProperty(false)
     items.onChange {
       val count = items.size
-      synchroniseButton.disable = count == 0
       synchroniseButton.text = if (count == 0) "No Changes" else s"Synchronise $count change${if (count != 1) "s" else ""}"
+    }
+    _ready.onAltered { ready =>
+      synchroniseButton.disable = !ready || items.size == 0
     }
     new BorderPane with DeviceInformationView {
       top = new Label(
@@ -51,6 +62,8 @@ object DeviceInformationView {
       }
       bottom = Anchor.newRight(synchroniseButton)
       padding = Insets(10, 10, 10, 10)
+
+      def ready: BooleanProperty = _ready
     }
   }
 }
