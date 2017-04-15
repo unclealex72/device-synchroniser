@@ -20,7 +20,7 @@ trait DiscoveryView {
 
 }
 
-object DiscoveryView extends JFXApp {
+object DiscoveryView {
 
   private lazy val defaultPadding: Insets = Insets(5, 0, 5, 0)
 

@@ -1,6 +1,7 @@
 import sbt.Keys._
 import sbt._
 import sbt.Project.projectToRef
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
 resolvers += "4thline resolver" at "http://4thline.org/m2"
 
@@ -10,7 +11,16 @@ lazy val shared: Project = (project in file("shared"))
     name := "device-synchroniser-shared",
     version := (version in ThisBuild).value,
     scalaVersion := Settings.versions.scala,
-		libraryDependencies ++= Settings.sharedDependencies.value,
+		libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % Settings.versions.circe,
+      "io.circe" %% "circe-parser" % Settings.versions.circe,
+      "org.fourthline.cling" % "cling-core" % Settings.versions.clingCore,
+      "com.typesafe.scala-logging" %% "scala-logging" % Settings.versions.scalaLogging,
+      "ch.qos.logback" % "logback-classic" % Settings.versions.logback % Test,
+      "org.typelevel" %% "cats" % Settings.versions.cats,
+      "org.specs2" %% "specs2-core" % Settings.versions.specs2 % Test,
+      "org.specs2" %% "specs2-mock" % Settings.versions.specs2 % Test
+    ),
 	  exportJars := true
   )
 
@@ -27,9 +37,9 @@ lazy val droid = (project in file("android"))
 	  minSdkVersion := "23",
 	  javacOptions in Compile ++= "-source" :: "1.7" :: "-target" :: "1.7" :: Nil,
 	  libraryDependencies ++= Seq("", "-extras").map { suffix =>
-      aar("org.macroid" %% s"macroid$suffix" % "2.0")
+      aar("org.macroid" %% s"macroid$suffix" % Settings.versions.macroid)
     } ++ Seq("server", "servlet", "client").map { suffix =>
-      "org.eclipse.jetty" % s"jetty-$suffix" % "8.1.8.v20121106"
+      "org.eclipse.jetty" % s"jetty-$suffix" % Settings.versions.jetty
     } ++ Seq("org.slf4j" % "slf4j-android" % "1.7.25"),
     packagingOptions := PackagingOptions(
       excludes = Seq("about.html")
@@ -62,10 +72,27 @@ lazy val scalafx = (project in file("scalafx"))
     scalaVersion := Settings.versions.scala,
     fork in run := true,
     libraryDependencies ++= Seq(
-      "org.scalafx" %% "scalafx" % "8.0.102-R11",
+      "org.scalafx" %% "scalafx" % Settings.versions.scalafx,
       "ch.qos.logback" % "logback-classic" % "1.1.7"
     )
-	).dependsOn(shared)
+	)
+  .dependsOn(shared)
+  .enablePlugins(JavaAppPackaging, DebianPlugin)
 
 versionCode := Some(1)
-version := "0.1-SNAPSHOT"
+
+/* Releases */
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies, // : ReleaseStep
+  inquireVersions, // : ReleaseStep
+  runTest, // : ReleaseStep
+  setReleaseVersion, // : ReleaseStep
+  commitReleaseVersion, // : ReleaseStep, performs the initial git checks
+  tagRelease, // : ReleaseStep
+  releaseStepCommand("scalafx/debian:packageBin"), // : ReleaseStep, build deb file.
+  releaseStepCommand("droid/android:package"), // : ReleaseStep, build deb file.
+  setNextVersion, // : ReleaseStep
+  commitNextVersion, // : ReleaseStep
+  pushChanges // : ReleaseStep, also checks that an upstream branch is properly configured
+)

@@ -35,7 +35,7 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
 
   stage = new PrimaryStage {
     title = "Device Synchroniser+"
-    width = 800
+    width = 900
     height = 600
   }
 

@@ -12,13 +12,13 @@ import devsync.remote.ChangesClient
 import devsync.scalafx.model.{Album, ChangelogItemModel}
 import devsync.scalafx.util.ObservableValues._
 import devsync.scalafx.util.{ConstantProgressTask, Services, TaskUpdates}
-import devsync.scalafx.view.{ChangelogItemView, DeviceInformationView}
+import devsync.scalafx.view.DeviceInformationView
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableSet
 import scalafx.concurrent.Task
-import scalafx.scene.{Node, Parent}
+import scalafx.scene.Parent
 import scalafx.scene.text.Font
 
 /**
