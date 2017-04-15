@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Name=Device Synchroniser+
+Icon=/usr/share/device-synchroniser-plus/icons/device-synchroniser-plus.png
+Exec=/usr/bin/device-synchroniser-plus
+StartupNotify=false
+StartupWMClass=scalafx.application.AppHelper

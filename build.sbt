@@ -1,4 +1,5 @@
-import sbt.Keys._
+import com.typesafe.sbt.packager.linux.LinuxSymlink
+import sbt.Keys.{mappings, _}
 import sbt._
 import sbt.Project.projectToRef
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
@@ -28,7 +29,7 @@ lazy val droid = (project in file("android"))
   .settings(
 	  android.useSupportVectors,
     organization := Settings.organisation,
-    name := "device-synchroniser-android",
+    name := "device-synchroniser-plus-android",
     version := (version in ThisBuild).value,
     scalaVersion := Settings.versions.scala,
 	  instrumentTestRunner :=
@@ -67,7 +68,7 @@ lazy val droid = (project in file("android"))
 lazy val scalafx = (project in file("scalafx"))
   .settings(
     organization := Settings.organisation,
-    name := "device-synchroniser-scalafx",
+    name := "device-synchroniser-plus",
     version := (version in ThisBuild).value,
     scalaVersion := Settings.versions.scala,
     fork in run := true,
@@ -75,8 +76,19 @@ lazy val scalafx = (project in file("scalafx"))
       "org.scalafx" %% "scalafx" % Settings.versions.scalafx,
       "ch.qos.logback" % "logback-classic" % "1.1.7"
     ),
-    maintainer in Debian := "alex.jones@unclealex.co.uk"
-	)
+    maintainer in Debian := "alex.jones@unclealex.co.uk",
+    mappings in Universal ++= Seq(
+        baseDirectory.value / "src" / "main" / "package" / "device-synchroniser-plus.png" ->
+          "icons/device-synchroniser-plus.png",
+        baseDirectory.value / "src" / "main" / "package" / "device-synchroniser-plus.desktop" ->
+          "applications/device-synchroniser-plus.desktop"
+    ),
+    linuxPackageSymlinks in Linux ++= Seq(
+      LinuxSymlink(
+        "/usr/share/applications/device-synchroniser-plus.desktop",
+        "/usr/share/device-synchroniser-plus/applications/device-synchroniser-plus.desktop")
+    )
+  )
   .dependsOn(shared)
   .enablePlugins(JavaAppPackaging, DebianPlugin)
 
