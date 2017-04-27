@@ -12,6 +12,7 @@ lazy val shared: Project = (project in file("shared"))
     name := "device-synchroniser-shared",
     version := (version in ThisBuild).value,
     scalaVersion := Settings.versions.scala,
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
 		libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % Settings.versions.circe,
       "io.circe" %% "circe-parser" % Settings.versions.circe,

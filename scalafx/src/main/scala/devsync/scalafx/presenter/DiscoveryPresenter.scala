@@ -22,7 +22,7 @@ case class DiscoveryPresenter(currentPresenter: ObjectProperty[Option[Presenter]
   val initialisingTask: ConstantProgressTask[Unit, Unit] = ConstantProgressTask.fromFuture[Unit, Unit] { (updater: TaskUpdates[Unit, Unit]) =>
     for {
       _ <- updater.updateMessageF("Searching for a Flac Manager server")
-      url <- Services.flacManagerDiscovery.discover
+      url <- Services.flacManagerDiscovery.discover(Option(System.getenv("FLAC_DEV")).isDefined)
       _ <- updater.updateMessageF("Searching for a device")
       deviceDescriptorAndPath <- Services.deviceDiscoverer.discover(Paths.get("/media", System.getProperty("user.name")), 2)
     } yield {
