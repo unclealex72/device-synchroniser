@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.util
-
-import java.io.ByteArrayInputStream
-
-import scalafx.scene.image.Image
+package uk.co.unclealex
 
 /**
-  * Generate artwork from a source.
-  * Created by alex on 11/04/17
+  * Contains all classes for synchronising Android devices.
   **/
-object Artwork {
+package object devsync {
 
-  def apply(maybeData: Option[Array[Byte]]): Image = {
-    maybeData match {
-      case Some(data) => new Image(new ByteArrayInputStream(data))
-      case _ => new Image("/no_artwork.png")
-    }
-  }
-
-  def empty: Image = apply(None)
 }
