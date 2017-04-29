@@ -20,26 +20,48 @@ import android.content.Intent
 import devsync.json.DeviceDescriptor
 
 /**
-  * Created by alex on 02/04/17
+  * Implicits to add a level of strong typing to intents.
   **/
 object IntentHelper {
 
+  /**
+    * Implicits to add a level of strong typing to intents.
+    * @param intent The intent to extend.
+    **/
   implicit class IntentHelperImplicits(intent: Intent) {
 
+    /**
+      * Add a device descriptor, device descriptor resource URI and a Flac Manager server URL to an intent.
+      * @param deviceDescriptor The device descriptor to add.
+      * @param resourceUri The URI of the device descriptor.
+      * @param serverUrl The URL of the Flac Manager server.
+      */
     def put(deviceDescriptor: DeviceDescriptor, resourceUri: String, serverUrl: String): Unit = {
       intent.putExtra(Constants.Intent.deviceDescriptor, deviceDescriptor)
       intent.putExtra(Constants.Intent.resourceUri, resourceUri)
       intent.putExtra(Constants.Intent.serverUrl, serverUrl)
     }
 
+    /**
+      * Get a device descriptor from an intent.
+      * @return A device descriptor.
+      */
     def deviceDescriptor: DeviceDescriptor = {
       intent.getExtras.getSerializable(Constants.Intent.deviceDescriptor).asInstanceOf[DeviceDescriptor]
     }
 
+    /**
+      * Get the resource URI of a device descriptor from an intent.
+      * @return A resource URI of a device descriptor.
+      */
     def resourceUri: String = {
       intent.getExtras.getString(Constants.Intent.resourceUri)
     }
 
+    /**
+      * Get the Flac Manager server URL from an intent.
+      * @return A Flac Manager server URL.
+      */
     def serverUrl: String = {
       intent.getExtras.getString(Constants.Intent.serverUrl)
     }

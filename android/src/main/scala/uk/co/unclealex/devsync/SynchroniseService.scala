@@ -32,18 +32,35 @@ import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
 
 /**
-  * Created by alex on 02/04/17
+  * Download music from a Flac Manager server and show progress in a notification.
   **/
 class SynchroniseService extends IntentService("devsync") with Contexts[Service] with StrictLogging {
 
+  /**
+    * The Android [[NotificationManager]]
+    */
   lazy val notificationManager: NotificationManager =
     getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager]
 
+  /**
+    * The width of the album art icon.
+    */
   lazy val iconWidth: Int = getResources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+
+  /**
+    * The height of the album art icon.
+    */
   lazy val iconHeight: Int = getResources.getDimensionPixelSize(android.R.dimen.notification_large_icon_height)
 
+  /**
+    * The ID of the generated notification.
+    */
   val ONGOING_NOTIFICATION_ID = 1
 
+  /**
+    * Start synchronising.
+    * @param intent An intent containing the location of the Flac Manager and device directory.
+    */
   override def onHandleIntent(intent: Intent): Unit = {
     val serverUrl = new URL(intent.serverUrl)
     val resourceUri = intent.resourceUri
@@ -55,26 +72,69 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
     device.synchronise(rootDocumentFile, changesClient, deviceListener)
   }
 
+  /**
+    * A case class used to send information to a notification when a new track is added or removed.
+    * @param change The [[Change]] action.
+    * @param maybeTags The music file's tags, if any.
+    * @param maybeArtwork The music file's artwork, if any.
+    * @param number The index of this change.
+    * @param total The total number of changes that will occur.
+    */
+  case class ChangeModel(
+                          change: Change,
+                          maybeTags: Option[Tags],
+                          maybeArtwork: Option[Array[Byte]],
+                          number: Int,
+                          total: Int)
+  /**
+    * A [[DeviceListener]] that displays progress on a notification.
+    * @return A new [[DeviceListener]]
+    */
   def createNewDeviceListener: DeviceListener[DocumentFile] = new DeviceListener[DocumentFile] {
 
+    /**
+      * Create a new notification.
+      */
     override def synchronisingStarting(): Unit = {
       val notification = buildNotification(Left("Starting"))
       startForeground(ONGOING_NOTIFICATION_ID, notification)
       notificationManager.notify(ONGOING_NOTIFICATION_ID, notification)
     }
 
+    /**
+      * Notify that a track is about to be removed.
+      * @param removal The [[Removal]] information.
+      * @param number The index of this change.
+      * @param total The total number of changes.
+      */
     override def removingMusic(removal: Removal, number: Int, total: Int): Unit = {
-      buildAndNotify(Right((removal, None, None, number, total)))
+      buildAndNotify(Right(ChangeModel(removal, None, None, number, total)))
     }
 
     override def musicRemoved(removal: Removal, number: Int, total: Int): Unit = {}
 
+    /**
+      * Notify that a track is about to be added.
+      * @param addition The [[Addition]] information.
+      * @param maybeTags The tags for the track about to be added, if any.
+      * @param maybeArtwork The artwork for the track about to be added, if any.
+      * @param number The index of this change.
+      * @param total The total number of changes.
+      */
     override def addingMusic(addition: Addition,
                              maybeTags: Option[Tags],
                              maybeArtwork: Option[Array[Byte]], number: Int, total: Int): Unit = {
-      buildAndNotify(Right((addition, maybeTags, maybeArtwork, number, total)))
+      buildAndNotify(Right(ChangeModel(addition, maybeTags, maybeArtwork, number, total)))
     }
 
+    /**
+      * Broadcast an event to the Media Scanner that a new music file has been added.
+      * @param addition The [[Addition]] information.
+      * @param maybeTags The tags for the track about to be added, if any.
+      * @param maybeArtwork The artwork for the track about to be added, if any.
+      * @param number The index of this change.
+      * @param resource The newly added resource.
+      */
     override def musicAdded(
                              addition: Addition,
                              maybeTags: Option[Tags],
@@ -85,20 +145,39 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
       sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, resource.getUri))
     }
 
+    /**
+      * Notify that synchronising has finished.
+      * @param count The total number of changes.
+      */
     override def synchronisingFinished(count: Int): Unit = {
       buildAndNotify(Left(Messages.Sync.finished(count)))
     }
 
+    /**
+      * Notify that synchronising has finished.
+      * @param e The error to report.
+      * @param maybeIdx The index of the change that failed, if any.
+      */
     override def synchronisingFailed(e: Exception, maybeIdx: Option[Int]): Unit = {
       buildAndNotify(Left(Messages.Sync.failed(e, maybeIdx)))
     }
   }
 
-  def buildAndNotify(data: Either[String, (Change, Option[Tags], Option[Array[Byte]], Int, Int)]): Unit = {
+
+  /**
+    * Create a new notification and notify the notification manager.
+    * @param data Either a failure message or a [[ChangeModel]]
+    */
+  def buildAndNotify(data: Either[String, ChangeModel]): Unit = {
     notificationManager.notify(ONGOING_NOTIFICATION_ID, buildNotification(data))
   }
 
-  def buildNotification(data: Either[String, (Change, Option[Tags], Option[Array[Byte]], Int, Int)]): Notification = {
+  /**
+    * Build a new [[Notification]].
+    * @param data Either a failure string or a [[ChangeModel]].
+    * @return A [[Notification]] that presents the data.
+    */
+  def buildNotification(data: Either[String, ChangeModel]): Notification = {
     val builder = new Notification.Builder(this).
       setContentTitle(Messages.Sync.notificationTitle).
       setSmallIcon(R.drawable.ic_action_sync)
@@ -107,7 +186,7 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
         builder.
           setContentText(message).
           setOngoing(false)
-      case Right((change, maybeTags, maybeArtwork, idx, total)) =>
+      case Right(ChangeModel(change, maybeTags, maybeArtwork, idx, total)) =>
         builder.
           setProgress(total, idx + 1, false).
           setOngoing(true)

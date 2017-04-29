@@ -20,5 +20,7 @@ import devsync.json.DeviceDescriptor
 
 /**
   * A case class used to hold a [[DeviceDescriptor]] and its location as a URI.
+  * @param deviceDescriptor The device descriptor.
+  * @param uri The uri of the device descriptor.
   **/
 case class DeviceDescriptorAndUri(deviceDescriptor: DeviceDescriptor, uri: String)
