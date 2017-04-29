@@ -27,11 +27,13 @@ import devsync.common.PassthroughLogging
 import scala.util.Try
 
 /**
-  * Created by alex on 01/04/17
   * An application that sets up and destroys HTTP caching.
   **/
 class DeviceSynchroniserApplication extends Application with StrictLogging {
 
+  /**
+    * Create an HTTP cache.
+    */
   override def onCreate(): Unit = {
     super.onCreate()
     try {
@@ -45,6 +47,9 @@ class DeviceSynchroniserApplication extends Application with StrictLogging {
     }
   }
 
+  /**
+    * Destroy the HTTP cache.
+    */
   override def onTerminate(): Unit = {
     Option(HttpResponseCache.getInstalled).foreach(_.flush())
     super.onTerminate()

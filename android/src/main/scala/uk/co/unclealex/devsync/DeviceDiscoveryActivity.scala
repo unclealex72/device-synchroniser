@@ -34,12 +34,19 @@ import cats.syntax.either._
 import IntentHelper._
 import DocumentFileResource._
 
+/**
+  * An activity that shows a progress spinner whilst searching for a Flac Manager server and
+  * device descriptor file.
+  */
 class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with PassthroughLogging {
 
   var findDeviceButton: Option[Button] = slot[Button]
   var progressBar: Option[ProgressBar] = slot[ProgressBar]
   var errorMessage: Option[TextView] = slot[TextView]
 
+  /**
+    * @inheritdoc
+    */
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
@@ -65,6 +72,10 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     processDeviceDescriptor(maybeDeviceUri)
   }
 
+  /**
+    * Look for a device descriptor file and, if found, look for the Flac Manager server.
+    * @param maybeDeviceUri The device URI from preferences or none if the preferences did not contain a device URI.
+    */
   private def processDeviceDescriptor(maybeDeviceUri: Option[String]): Unit = {
     implicit val resourceStreamProvider: DocumentFileResourceStreamProvider = new DocumentFileResourceStreamProvider()
     val device = Services.device
@@ -93,6 +104,12 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     }
   }
 
+  /**
+    * Store the value of the location of the device descriptor file.
+    * @param requestCode N/A
+    * @param resultCode N/A
+    * @param data The URI of the location of the device descriptor file.
+    */
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     val treeUri = data.getData
     getContentResolver.takePersistableUriPermission(
@@ -102,6 +119,11 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     processDeviceDescriptor(Some(treeUri.toString))
   }
 
+  /**
+    * Move on to the [[DeviceSynchroniserActivity]]
+    * @param deviceDescriptorAndUri The device descriptor and its location.
+    * @param serverUrl The URL of the Flac Manager server.
+    */
   def next(deviceDescriptorAndUri: DeviceDescriptorAndUri, serverUrl: String): Unit = {
     val intent = new Intent(this, classOf[DeviceSynchroniserActivity])
     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK)

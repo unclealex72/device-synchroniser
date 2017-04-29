@@ -19,6 +19,6 @@ package uk.co.unclealex.devsync
 import devsync.json.DeviceDescriptor
 
 /**
-  * Created by alex on 30/03/17
+  * A case class used to hold a [[DeviceDescriptor]] and its location as a URI.
   **/
 case class DeviceDescriptorAndUri(deviceDescriptor: DeviceDescriptor, uri: String)

@@ -17,17 +17,39 @@
 package uk.co.unclealex.devsync
 
 /**
-  * Created by alex on 30/03/17
+  * Constants that are used in various places.
   **/
 object Constants {
 
+  /**
+    * Constants for intents.
+    */
   object Intent {
+
+    /**
+      * The intent extras key for the location of a user's local music directory.
+      */
     val resourceUri = "resourceUri"
+
+    /**
+      * The intent extras key for the content of a user's device descriptor file.
+      */
     val deviceDescriptor = "deviceDescriptor"
+
+    /**
+      * The URL of a Flac Manager server.
+      */
     val serverUrl = "serverUrl"
   }
 
+  /**
+    * Constants for preferences.
+    */
   object Prefs {
+
+    /**
+      * The preference key used to store the location of a user's local music directory.
+      */
     val resourceUri = "resourceUri"
   }
 }

@@ -26,19 +26,35 @@ import devsync.sync.{Device, DeviceImpl}
 import org.fourthline.cling.android.AndroidUpnpServiceConfiguration
 
 /**
-  * Created by alex on 26/03/17
   * An object that holds singleton services
   **/
 object Services {
 
+  /**
+    * A singleton instance of [[JsonCodec]].
+    */
   val jsonCodec: JsonCodec = new CirceCodec
 
+  /**
+    * A singleton instance of [[FlacManagerDiscovery]].
+    */
   val flacManagerDiscovery: FlacManagerDiscovery = new ClingFlacManagerDiscovery(new AndroidUpnpServiceConfiguration)
 
+  /**
+    * A factory for generating a [[ChangesClient]]
+    * @param baseUrl The base URL of the Flac Manager server.
+    * @return A new [[ChangesClient]] that points to the Flac Manager at the given url.
+    */
   def changesClient(baseUrl: URL): ChangesClient = new ChangesClientImpl(jsonCodec, baseUrl)
 
+  /**
+    * A singleton instance of [[IsoClock]]
+    */
   val isoClock: IsoClock = SystemIsoClock
 
+  /**
+    * A singleton instance of [[Device]]
+    */
   val device: Device[DocumentFile] = new DeviceImpl[DocumentFile](jsonCodec, isoClock)
 
 }

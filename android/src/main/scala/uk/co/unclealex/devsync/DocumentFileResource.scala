@@ -28,10 +28,13 @@ import macroid.ContextWrapper
 import scala.util.Try
 
 /**
-  * Created by alex on 02/04/17
+  * A typeclass that allows an Android [[DocumentFile]] to be used as a [[Resource]].
   **/
 object DocumentFileResource {
 
+  /**
+    * A typeclass that allows an Android [[DocumentFile]] to be used as a [[Resource]].
+    */
   implicit object ImplicitDocumentFileResource extends Resource[DocumentFile] with StrictLogging {
 
     private def findOrCreate(documentFile: DocumentFile,
@@ -53,10 +56,16 @@ object DocumentFileResource {
       }
     }
 
-    def mkdir(documentFile: DocumentFile, name: String): Either[Exception, DocumentFile] =
+    /**
+      * @inheritdoc
+      */
+    override def mkdir(documentFile: DocumentFile, name: String): Either[Exception, DocumentFile] =
       findOrCreate(documentFile, name, documentFile.createDirectory, _.isDirectory, name => s"$name is not a directory")
 
-    def findOrCreateFile(documentFile: DocumentFile, mimeType: String, name: String): Either[Exception, DocumentFile] =
+    /**
+      * @inheritdoc
+      */
+    override def findOrCreateFile(documentFile: DocumentFile, mimeType: String, name: String): Either[Exception, DocumentFile] =
       findOrCreate(
         documentFile,
         name,
@@ -64,6 +73,9 @@ object DocumentFileResource {
         _.isFile,
         nm => s"$nm is not a standard file")
 
+    /**
+      * @inheritdoc
+      */
     override def writeTo[T](documentFile: DocumentFile, block: OutputStream => Either[Exception, T])
                         (implicit resourceStreamProvider: ResourceStreamProvider[DocumentFile]): Either[Exception, T] = {
       val uri = documentFile.getUri
@@ -74,6 +86,9 @@ object DocumentFileResource {
       } yield result
     }
 
+    /**
+      * @inheritdoc
+      */
     override def readFrom[T](documentFile: DocumentFile, block: InputStream => Either[Exception, T])
                          (implicit resourceStreamProvider: ResourceStreamProvider[DocumentFile]): Either[Exception, T] = {
       val uri = documentFile.getUri
@@ -84,13 +99,22 @@ object DocumentFileResource {
       } yield result
     }
 
-    def remove(documentFile: DocumentFile): Unit = {
+    /**
+      * @inheritdoc
+      */
+    override def remove(documentFile: DocumentFile): Unit = {
       logger.info(s"Removing ${documentFile.getUri}")
       Try(documentFile.delete())
     }
 
+    /**
+      * @inheritdoc
+      */
     override def canWrite(documentFile: DocumentFile): Boolean = documentFile.canWrite
 
+    /**
+      * @inheritdoc
+      */
     override def find(documentFile: DocumentFile, path: RelativePath): Option[DocumentFile] = {
       path match {
         case DirectoryAndFile(dir, name) =>
@@ -111,14 +135,28 @@ object DocumentFileResource {
       }
     }
 
+    /**
+      * @inheritdoc
+      */
     override def parent(documentFile: DocumentFile): Option[DocumentFile] = Option(documentFile.getParentFile)
 
+    /**
+      * @inheritdoc
+      */
     override def isEmpty(documentFile: DocumentFile): Boolean =
       Option(documentFile.listFiles()).exists(_.isEmpty)
   }
 
-  class DocumentFileResourceStreamProvider(implicit contextWrapper: ContextWrapper) extends ResourceStreamProvider[DocumentFile] {
+  /**
+    * A typeclass that allows an Android [[DocumentFileResource]] to be used as a [[ResourceStreamProvider]]
+    * @param contextWrapper A context wrapper used to resolve content from a URI.
+    */
+  class DocumentFileResourceStreamProvider(implicit contextWrapper: ContextWrapper) extends
+    ResourceStreamProvider[DocumentFile] {
 
+    /**
+      * @inheritdoc
+      */
     override def provideInputStream(resource: DocumentFile): Either[Exception, InputStream] = {
       try {
         Right(contextWrapper.bestAvailable.getContentResolver.openInputStream(resource.getUri))
@@ -128,6 +166,9 @@ object DocumentFileResource {
       }
     }
 
+    /**
+      * @inheritdoc
+      */
     override def provideOutputStream(resource: DocumentFile): Either[Exception, OutputStream] = {
       try {
         Right(contextWrapper.bestAvailable.getContentResolver.openOutputStream(resource.getUri))

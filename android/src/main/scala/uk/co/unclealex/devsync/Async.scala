@@ -21,11 +21,13 @@ import android.os.AsyncTask
 import scala.concurrent.ExecutionContext
 
 /**
-  * Created by alex on 25/03/17
-  * Holder for an implicit execution context suitable for android.
+  * Holder for an implicit execution context suitable for Android.
   **/
 object Async {
 
+  /**
+    * An execution context that uses Android's [[AsyncTask.THREAD_POOL_EXECUTOR]]
+    */
   implicit val androidExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
 
 }

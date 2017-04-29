@@ -20,11 +20,18 @@ import android.graphics.{Bitmap, BitmapFactory, Matrix, RectF}
 import macroid.ContextWrapper
 
 /**
-  * Created by alex on 03/04/17
-  * Create a bitmap from an array of bytes.
+  * Create a bitmap from an array of bytes or return a default image.
   **/
 object Artwork {
 
+  /**
+    * Create a bitmap from an array of bytes or return a default image.
+    * @param maybeData The image data, if any.
+    * @param width The required width of the object.
+    * @param height The required height of the object.
+    * @param cw An implicit wrapper for the current context.
+    * @return A new bitmap meeting the specifications
+    */
   def apply(maybeData: Option[Array[Byte]], width: Int, height: Int)(implicit cw: ContextWrapper): Bitmap = {
     val context = cw.bestAvailable
     val maybeUnscaledBitmap = for {

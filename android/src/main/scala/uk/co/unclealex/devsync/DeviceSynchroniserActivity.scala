@@ -45,7 +45,7 @@ import scala.concurrent.Future
 
 
 /**
-  * Created by alex on 30/03/17
+  * The activity that lists the changes since the device was updated and offers a button to synchronise.
   **/
 class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppCompatActivity] with StrictLogging {
 
@@ -97,6 +97,11 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
   }
 
 
+  /**
+    * A recycler view adaptor to show changelog items.
+    * @param changesClient The [[ChangesClient]] used to get changes.
+    * @param changelog The changelog for this device.
+    */
   class ChangelogItemAdapter(changesClient: ChangesClient, changelog: Changelog) extends RecyclerView.Adapter[AlbumViewHolder] {
     override def getItemCount: Int = changelog.items.size
 
@@ -146,6 +151,10 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
 
   }
 
+  /**
+    * A view to show album information.
+    * @param view The parent view.
+    */
   class AlbumViewHolder(val view: View) extends RecyclerView.ViewHolder(view) {
     val albumArtwork: Ui[Option[ImageView]] = view.find[ImageView](R.id.album_cover_view)
     val albumText: Ui[Option[TextView]] = view.find[TextView](R.id.album_text_view)
@@ -153,19 +162,42 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     val timeText: Ui[Option[TextView]] = view.find[TextView](R.id.time_text_view)
   }
 
-  def populateChangelog(changesClient: ChangesClient, user: String, maybeLastModified: Option[IsoDate]): Future[Either[Exception, Changelog]] = Future {
+  def populateChangelog(
+                         changesClient: ChangesClient,
+                         user: String,
+                         maybeLastModified: Option[IsoDate]): Future[Either[Exception, Changelog]] = Future {
     changesClient.changelogSince(user, maybeLastModified)
   }
 
-  // Extractors for the different view components
-  class ViewExtractor[V <: View](val id: Int) {
+  /**
+    * An abstract base class used to create extractors for different UI components.
+    * @param id The ID of the component.
+    * @tparam V The type of the component.
+    */
+  abstract class ViewExtractor[V <: View](val id: Int) {
     def unapply(view: View): Option[V] = view match {
       case v: V if v.getId == id => Some(v)
       case _ => None
     }
   }
+
+  /**
+    * An extractor for the change count view.
+    */
   object ChangeCountView extends ViewExtractor[TextView](R.id.changeCountView)
+
+  /**
+    * An extractor for the last updated view.
+    */
   object LastUpdatedView extends ViewExtractor[TextView](R.id.lastUpdatedView)
+
+  /**
+    * An extractor for the synchronise button.
+    */
   object SynchroniseButtonView extends ViewExtractor[FloatingActionButton](R.id.fab_action_button)
+
+  /**
+    * An extractor for the changes container.
+    */
   object ChangesContainerView extends ViewExtractor[RecyclerView](R.id.recycler)
 }
