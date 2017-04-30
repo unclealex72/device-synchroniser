@@ -24,7 +24,8 @@ import devsync.json.{CirceCodec, IsoClock, JsonCodec, SystemIsoClock}
 import devsync.remote.{ChangesClient, ChangesClientImpl}
 import devsync.sync.{Device, DeviceImpl}
 import org.fourthline.cling.android.AndroidUpnpServiceConfiguration
-
+import uk.co.unclealex.devsync.Async._
+import uk.co.unclealex.devsync.DocumentFileResource._
 /**
   * An object that holds singleton services
   **/

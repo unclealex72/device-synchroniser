@@ -29,13 +29,17 @@ import scalafx.scene.{Node, Parent}
 import scalafx.scene.text.Font
 
 /**
-  * Created by alex on 14/04/17
-  **/
+  * The presenter used to discover the location of the Flac Manager server and the location of a user's device.
+  * @param currentPresenter The current presenter property.
+  * @param executionContext An execution context used to execute asynchronous tasks.
+  * @param defaultFont The default font to use.
+  */
 case class DiscoveryPresenter(currentPresenter: ObjectProperty[Option[Presenter]])
                              (implicit executionContext: ExecutionContext, defaultFont: Font) extends Presenter {
 
-  val discoveryView = DiscoveryView()
-  val initialisingTask: ConstantProgressTask[Unit, Unit] = ConstantProgressTask.fromFuture[Unit, Unit] { (updater: TaskUpdates[Unit, Unit]) =>
+  private val discoveryView = DiscoveryView()
+
+  private val initialisingTask: ConstantProgressTask[Unit, Unit] = ConstantProgressTask.fromFuture[Unit, Unit] { (updater: TaskUpdates[Unit, Unit]) =>
     for {
       _ <- updater.updateMessageF("Searching for a Flac Manager server")
       url <- Services.flacManagerDiscovery.discover(Option(System.getenv("FLAC_DEV")).isDefined)
@@ -45,8 +49,17 @@ case class DiscoveryPresenter(currentPresenter: ObjectProperty[Option[Presenter]
       transition(Some(ChangelogPresenter(currentPresenter, url, deviceDescriptorAndPath._2, deviceDescriptorAndPath._1)))(currentPresenter)
     }
   }
+
   discoveryView.message <== initialisingTask.message
+
+  /**
+    * @inheritdoc
+    */
   def content(): Parent = discoveryView
+
+  /**
+    * @inheritdoc
+    */
   def initialise(): Task[_] = initialisingTask
 
 }

@@ -25,21 +25,38 @@ import scalafx.scene.layout.BorderPane
 import scalafx.scene.text.Font
 
 /**
-  * Created by alex on 14/04/17
+  * The view shown during device and server discovery.
   **/
 trait DiscoveryView {
 
+  /**
+    * Get the message to show on the screen.
+    * @return A property for the message to show on the screen.
+    */
   def message: StringProperty
-  def message_=(v: String) {
-    message() = v
+
+  /**
+    * Set the message to show on the screen.
+    * @param message The message to show on the screen.
+    */
+  def message_=(message: String) {
+    this.message() = message
   }
 
 }
 
+/**
+  * Create a new [[DiscoveryView]]
+  */
 object DiscoveryView {
 
   private lazy val defaultPadding: Insets = Insets(5, 0, 5, 0)
 
+  /**
+    * Create a new [[DiscoveryView]]
+    * @param defaultFont The default font to use.
+    * @return
+    */
   def apply()(implicit defaultFont: Font): Parent with DiscoveryView = {
     val messageLabel: Label = new Label {
       padding = defaultPadding

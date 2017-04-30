@@ -27,38 +27,74 @@ import scalafx.scene.control.Label
 import scalafx.scene.image.ImageView
 import scalafx.scene.layout.{AnchorPane, HBox, VBox}
 import scalafx.scene.text.Font
+
 /**
-  * Created by alex on 14/04/17
+  * The view to show whilst synchronising.
   **/
 trait SynchronisingView extends Dimensions {
 
+  /**
+    * The requested dimensions for the stage.
+    */
   val dimensions: Dimension2D = new Dimension2D(width = 800, height = 155)
 
+  /**
+    * Get the current synchronisation action, if any.
+    * @return The synchronisation action property.
+    */
   def action: ObjectProperty[Option[SynchroniseAction]]
 
+  /**
+    * Set the current synchronisation action, if any.
+    * @param sa The new value of the synchronisation action.
+    */
   def action_=(sa: Option[SynchroniseAction]): Unit = {
     action() = sa
   }
 
+  /**
+    * Get the work done property.
+    * @return The work done property.
+    */
   def workDone: LongProperty
 
-  def workDone_=(_workDone: Long): Unit = {
-    workDone() = _workDone
+  /**
+    * Set the amount of work done.
+    * @param workDone New new amount of work done.
+    */
+  def workDone_=(workDone: Long): Unit = {
+    this.workDone() = workDone
   }
 
+  /**
+    * Get the total work property.
+    * @return The total work property.
+    */
   def totalWork: LongProperty
 
-  def totalWork_=(_totalWork: Long): Unit = {
-    totalWork() = _totalWork
+  /**
+    * Set the amount of total work.
+    * @param totalWork New new amount of total work.
+    */
+  def totalWork_=(totalWork: Long): Unit = {
+    this.totalWork() = totalWork
 
   }
 }
 
+/**
+  * Create a new [[SynchronisingView]].
+  */
 object SynchronisingView {
 
   private val defaultHeight: Double = 128
   private val defaultWidth: Double = 600
 
+  /**
+    * Create a new [[SynchronisingView]].
+    * @param defaultFont The default font to use.
+    * @return A new [[SynchronisingView]]
+    */
   def apply()(implicit defaultFont: Font): Parent with SynchronisingView = {
     val _action: ObjectProperty[Option[SynchroniseAction]] = ObjectProperty(None)
     val progressBar: AnnotatedProgressBar = new AnnotatedProgressBar {

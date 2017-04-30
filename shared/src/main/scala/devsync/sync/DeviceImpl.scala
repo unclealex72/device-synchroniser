@@ -19,31 +19,52 @@ package devsync.sync
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import cats.data.EitherT
-import cats.instances.future._
 import cats.syntax.either._
+import cats.instances.future._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json._
 import devsync.remote.ChangesClient
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
-/**
-  * Created by alex on 27/03/17apply
-  **/
-class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] with StrictLogging {
 
+/**
+  * The default implementation of [[Device]]
+  * @param jsonCodec The [[JsonCodec]] used to decode JSON objects from the Flac Manager server.
+  * @param isoClock The [[IsoClock]] used to get the current time.
+  * @tparam R The type of files a device contains. There will need to be typeclasses for both `Resource[R]` and
+  *           `ResourceStreamProvider[R]`. This then allows the Android filesystem and the Linux filesystem to
+  *           be treated as one.
+  */
+class DeviceImpl[R](jsonCodec: JsonCodec,
+                    isoClock: IsoClock) extends Device[R] with StrictLogging {
+
+  /**
+    * The name the a device descriptor filename.
+    */
   val DESCRIPTOR_FILENAME = "device.json"
 
+  /**
+    * A case class that contains an exception and maybe an index of a failed change.
+    * @param e An exception.
+    * @param maybeIdx The index of the change that failed or none if the failure was not specific to one change.
+    */
   case class ExceptionWithMaybeIndex(e: Exception, maybeIdx: Option[Int] = None)
+
+  /**
+    * A shorthand for [[ExceptionWithMaybeIndex]]
+    */
   type EWMI = ExceptionWithMaybeIndex
 
+  /**
+    * @inheritdoc
+    */
   override def synchronise(
                             root: R,
                             changesClient: ChangesClient,
-                            deviceListener: DeviceListener[R])
-                          (implicit resource: Resource[R],
-                           resourceStreamProvider: ResourceStreamProvider[R],
-                           ec: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]] = {
+                            deviceListener: DeviceListener[R])(implicit resource: Resource[R],
+                                                               resourceStreamProvider: ResourceStreamProvider[R],
+                                                               executionContext: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]] = {
     Future(deviceListener.synchronisingStarting())
     findDeviceDescriptor(Seq(root)) match {
       case Right((deviceDescriptor, _)) =>
@@ -56,14 +77,25 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
     }
   }
 
-  /**
-    * Keep track of the index of the change that failed (if, any)
-    * @param e
-    * @param maybeIdx
-    */
-  class Synchroniser(root: R, changesClient: ChangesClient, deviceListener: DeviceListener[R], deviceDescriptor: DeviceDescriptor)
-                    (implicit resource: Resource[R], resourceStreamProvider: ResourceStreamProvider[R], ec: ExecutionContext) {
 
+  /**
+    * A class that actually performs the synchronisation of a device with the Flac Manager server.
+    * @param root The root of the device.
+    * @param changesClient The [[ChangesClient]] used to download changes from the Flac Manager server.
+    * @param deviceListener A [[DeviceListener]] used to provide feedback to a user.
+    * @param deviceDescriptor The [[DeviceDescriptor]] file that describes the device.
+    * @param resource A typeclass with file-like properties.
+    * @param resourceStreamProvider A typeclass used to get a stream of data from a resource.
+    * @param executionContext An execution context for running synchronisation in another thread.
+    */
+  class Synchroniser(root: R, changesClient: ChangesClient, deviceListener: DeviceListener[R], deviceDescriptor: DeviceDescriptor)(implicit resource: Resource[R],
+                                                                                                                                   resourceStreamProvider: ResourceStreamProvider[R],
+                                                                                                                                   executionContext: ExecutionContext) {
+
+    /**
+      * Synchronise the device.
+      * @return Eventually either an [[EWMI]] or the number of changes.
+      */
     def synchronise: Future[Either[EWMI, Int]] = {
       val wrappedResult = for {
         changes <- loadChanges
@@ -94,7 +126,10 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
 
     }
 
-
+    /**
+      * Load the [[Changes]] from a Flac Manager server.
+      * @return Eventually either a [[Changes]] object or a failure.
+      */
     def loadChanges: EitherT[Future, EWMI, Changes] = EitherT {
       Future {
         changesClient.changesSince(deviceDescriptor.user, deviceDescriptor.maybeLastModified).leftMap {
@@ -103,6 +138,11 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
       }
     }
 
+    /**
+      * Process and synchronise a list of [[Change]]s.
+      * @param changes The [[Changes]] object downloaded from the Flac Manager server.
+      * @return Eventually either the number of changes or a failure.
+      */
     def processChanges(changes: Changes): EitherT[Future, EWMI, Int] = {
       val empty: EitherT[Future, EWMI, Unit] = EitherT.right[Future, EWMI, Unit](Future.successful({}))
       val total = changes.changes.size
@@ -137,6 +177,58 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
       }.map(_ => total)
     }
 
+    /**
+      * A rich change is a [[Change]] that may be decorated by supporting [[Tags]] and album artwork. If either or neither
+      * cannot be downloaded this is not seen as an error.
+      */
+    sealed trait RichChange
+
+    /**
+      * A rich addition that may also contain [[Tags]] and album artwork.
+      * @param addition The original [[Change]]
+      * @param maybeTags [[Tags]] for the addition, if they could be loaded.
+      * @param maybeArtwork Artwork for the addition, if it could be loaded.
+      */
+    case class RichAddition(addition: Addition, maybeTags: Option[Tags], maybeArtwork: Option[Array[Byte]]) extends RichChange
+
+    /**
+      * A rich removal that contains nothing but the original change.
+      * @param removal The original [[Change]]
+      */
+    case class RichRemoval(removal: Removal) extends RichChange
+
+    /**
+      * A case class that extends a [[RichChange]] with the index of the change and the total number of changes. This
+      * is used to report progress in the [[DeviceListener]].
+      *
+      * @param richChange The original rich change.
+      * @param number The index of this change.
+      * @param total The total number of changes.
+      */
+    case class RichChangeWithProgress(richChange: RichChange, number: Int, total: Int)
+
+    /**
+      * An object used to create [[RichChangeWithProgress]]es.
+      */
+    object RichChangeWithProgress {
+
+      /**
+        * A function that creates a new [[RichChangeWithProgress]] from an index and a [[RichChange]].
+        * @param total The total number of changes.
+        * @return A function that creates a new [[RichChangeWithProgress]] from an index and a [[RichChange]].
+        */
+      def apply(total: Int): (RichChange, Int) => RichChangeWithProgress = {
+        case (change, number) =>
+          RichChangeWithProgress(change, number, total)
+      }
+    }
+
+    /**
+      * Process a [[RichChangeWithProgress]] by either adding or removing the track from the device and notifying a
+      * user through the [[DeviceListener]]
+      * @param richChangeWithProgress The change to process.
+      * @return Eventually [[Unit]] or an exception.
+      */
     def processRichChangeWithProgress(richChangeWithProgress: RichChangeWithProgress): EitherT[Future, Exception, Unit] = {
       // When adding and removing music we need to make sure that the addingMusic and removingMusic events are
       // always called before musicAdded and musicRemoved.
@@ -162,13 +254,18 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
       }
     }
 
+    /**
+      * Add a track to the device.
+      * @param addition The track to add.
+      * @return Eventually either the resource that was newly created or an exception.
+      */
     def addMusic(addition: Addition): EitherT[Future, Exception, R] = {
       addition.relativePath match {
         case rp @ DirectoryAndFile(dir, name) =>
           logger.info(s"Adding $rp")
           for {
             directory <- EitherT(Future.successful(resource.mkdirs(root, dir)))
-            file <- EitherT(Future.successful(resource.findOrCreateFile(directory, "audio/mp3", name)))
+            file <- EitherT(Future.successful(resource.findOrCreateResource(directory, "audio/mp3", name)))
             _ <- EitherT(Future.successful(resource.writeTo(file, out => changesClient.music(addition, out))))
           } yield {
             file
@@ -180,6 +277,11 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
       }
     }
 
+    /**
+      * Remove a track from the device.
+      * @param removal The track to remove.
+      * @return Eventuall either [[Unit]] or an exception.
+      */
     def removeMusic(removal: Removal): EitherT[Future, Exception, Unit] = {
       val path = removal.relativePath
       logger.info(s"Removing $path")
@@ -190,18 +292,12 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
       }
     }
 
-    sealed trait RichChange
-    case class RichAddition(addition: Addition, maybeTags: Option[Tags], maybeArtwork: Option[Array[Byte]]) extends RichChange
-    case class RichRemoval(removal: Removal) extends RichChange
-
-    case class RichChangeWithProgress(richChange: RichChange, number: Int, total: Int)
-    object RichChangeWithProgress {
-      def apply(total: Int): (RichChange, Int) => RichChangeWithProgress = {
-        case (change, number) =>
-          RichChangeWithProgress(change, number, total)
-      }
-    }
-
+    /**
+      * Update the device descriptor with the result of this synchronisation.
+      * @param deviceDescriptor The device descriptor to update.
+      * @param accumulatedResult The number of changes that were synchronised or an exception with maybe an index.
+      * @return Either [[Unit]] or an exception if the device descriptor could not be saved back to the device.
+      */
     def updateDeviceDescriptor(deviceDescriptor: DeviceDescriptor, accumulatedResult: Either[EWMI, Int]): Either[Exception, Unit] = {
       // Finished - log whether synchronisation was successful or not and write the new device descriptor back to the
       val newDeviceDescriptor = accumulatedResult match {
@@ -213,7 +309,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
           deviceDescriptor.copy(maybeOffset = ewmi.maybeIdx.orElse(deviceDescriptor.maybeOffset))
       }
       for {
-        deviceDescriptorFile <- resource.findOrCreateFile(root, "application/json", DESCRIPTOR_FILENAME)
+        deviceDescriptorFile <- resource.findOrCreateResource(root, "application/json", DESCRIPTOR_FILENAME)
         _ <- resource.writeTo(deviceDescriptorFile, out => {
           IO.closing(new ByteArrayInputStream(jsonCodec.writeDeviceDescriptor(newDeviceDescriptor).getBytes("UTF-8"))) { in =>
             IO.copy(in, out)
@@ -223,6 +319,9 @@ class DeviceImpl[R](jsonCodec: JsonCodec, isoClock: IsoClock) extends Device[R] 
     }
   }
 
+  /**
+    * @inheritdoc
+    */
   override def findDeviceDescriptor(roots: Iterable[R])
                                    (implicit resource: Resource[R],
                                     resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, (DeviceDescriptor, R)] = {

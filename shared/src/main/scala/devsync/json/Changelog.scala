@@ -17,10 +17,18 @@
 package devsync.json
 
 /**
-  * Created by alex on 19/03/17
+  * A changelog is a list of changes teCreated by alex on 19/03/17hat will be applied to a device at an album level.
+  * @param items The list of changes.
   **/
 case class Changelog(items: Seq[ChangelogItem])
 
+/**
+  * A changelog item represents a potential change to an album on a device.
+  * @param parentRelativePath The parent relative path of the change.
+  * @param at The time the change was made.
+  * @param relativePath The relative path of the album that has been added or removed.
+  * @param links A set of [[Links]] to read information about the album.
+  */
 case class ChangelogItem(parentRelativePath: RelativePath,
                          at: IsoDate,
                          relativePath: RelativePath, links: Links) extends HasLinks with HasRelativePath

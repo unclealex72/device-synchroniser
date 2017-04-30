@@ -36,18 +36,17 @@ import scalafx.scene.layout.Pane
 import scalafx.scene.text.Font
 /**
   * Main entry point for the Device Synchroniser Plus app.
-  * Created by alex on 14/04/17
   **/
 object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
 
-  implicit val defaultFont: Font = new Font("Ubuntu", 18)
+  private implicit val defaultFont: Font = new Font("Ubuntu", 18)
 
-  def ui(callback: =>Unit): EitherT[Future, Exception, Unit] = EitherT.right {
+  private def ui(callback: =>Unit): EitherT[Future, Exception, Unit] = EitherT.right {
     Platform.runLater(callback)
     Future.successful()
   }
 
-  val observableState: ObjectProperty[Option[Presenter]] = ObjectProperty(None)
+  private val observableState: ObjectProperty[Option[Presenter]] = ObjectProperty(None)
 
   stage = new PrimaryStage {
     title = "Device Synchroniser+"
@@ -55,8 +54,8 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
     height = 600
   }
 
-  val pane = new Pane
-  val scene = new Scene
+  private val pane = new Pane
+  private val scene = new Scene
   stage.scene = scene
 
   observableState.onAltered {

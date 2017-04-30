@@ -23,18 +23,48 @@ import com.typesafe.scalalogging.StrictLogging
 import devsync.json.RelativePath
 
 /**
-  * Created by alex on 27/03/17
-  * A type class used to allow the android file system and a desktop file system in the same way.
+  * A type class used to allow the android file system and a desktop file system to be accessed in the same way.
   **/
 trait Resource[R] extends StrictLogging {
+
+  /**
+    * Check to see if a resource can be written to.
+    * @param resource The resource to check.
+    * @return True if the resource can be written to, false otherwise.
+    */
   def canWrite(resource: R): Boolean
 
+  /**
+    * Try and find a resource.
+    * @param resource The base resource.
+    * @param path A relative path relative to the base resource.
+    * @return The resource at the new path or none if no such resource could be found.
+    */
   def find(resource: R, path: RelativePath): Option[R]
 
-  def findOrCreateFile(resource: R, mimeType: String, name: String): Either[Exception, R]
+  /**
+    * Find or create a new resource.
+    * @param resource The base resource.
+    * @param mimeType The mime type of the new resource.
+    * @param name The name of the new resource.
+    * @return Either the new resource or an exception.
+    */
+  def findOrCreateResource(resource: R, mimeType: String, name: String): Either[Exception, R]
 
+  /**
+    * Create a new directory or do nothing if the directory already exists.
+    * @param resource The base resource.
+    * @param name The name of the new directory.
+    * @return Either an exception or a new resource for the directory.
+    */
   def mkdir(resource: R, name: String): Either[Exception, R]
 
+  /**
+    * Create a hierarchy of directories or do nothing if the hierarchy already exists.
+    * @param resource The base resource.
+    * @param relativePath The relative path of the new directory.
+    * @return Either an exception or a new resource for the directory.
+    */
   def mkdirs(resource: R, relativePath: RelativePath): Either[Exception, R] = {
     val empty: Either[Exception, R] = Right(resource)
     relativePath.pathSegments.foldLeft(empty) { (acc, name) =>
@@ -42,6 +72,14 @@ trait Resource[R] extends StrictLogging {
     }
   }
 
+  /**
+    * Write to a resource.
+    * @param resource The resource to write to.
+    * @param block A block of code that provides data to an output stream.
+    * @param resourceStreamProvider The resource stream provider used to get an output stream for the resource.
+    * @tparam T The type of result to return.
+    * @return Either the result of executing the block of code or an exception.
+    */
   def writeTo[T](resource: R, block: OutputStream => Either[Exception, T])
                          (implicit resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, T] = {
     logger.info(s"Opening $resource for writing")
@@ -51,6 +89,14 @@ trait Resource[R] extends StrictLogging {
     } yield result
   }
 
+  /**
+    * Read from a resource.
+    * @param resource The resource to read from.
+    * @param block A block of code that receives data from an input stream.
+    * @param resourceStreamProvider The resource stream provider used to get an input stream for the resource.
+    * @tparam T The type of result to return.
+    * @return Either the result of executing the block of code or an exception.
+    */
   def readFrom[T](resource: R, block: InputStream => Either[Exception, T])
                           (implicit resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, T] = {
     logger.info(s"Opening $resource for reading")
@@ -60,12 +106,30 @@ trait Resource[R] extends StrictLogging {
     } yield result
   }
 
+  /**
+    * Remove a resource.
+    * @param resource The resource to remove.
+    */
   def remove(resource: R): Unit
 
+  /**
+    * Get a resource's parent.
+    * @param resource The resource who's parent is being requested.
+    * @return Either the resource's parent or none if the resource is a root directory.
+    */
   def parent(resource: R): Option[R]
 
+  /**
+    * Check to see if a directory resource is empty.
+    * @param resource The resource to check.
+    * @return True if the resource is an empty directory.
+    */
   def isEmpty(resource: R): Boolean
 
+  /**
+    * Remove a resource and traverse up it's parents, removing any empty directories.
+    * @param resource
+    */
   def removeAndCleanDirectories(resource: R): Unit = {
     remove(resource)
     Iterator.iterate(parent(resource))(mr => mr.flatMap(parent)).takeWhile(mr => mr.exists(r => !isEmpty(r))).foreach { mr =>
@@ -76,11 +140,21 @@ trait Resource[R] extends StrictLogging {
 
 /**
   * A type class for classes that are required by a file system to provide access to the contents of files.
-  * @tparam R
+  * @tparam R A resource type.
   */
 trait ResourceStreamProvider[R] {
 
+  /**
+    * Provide an input stream that gets data from a resource.
+    * @param resource The resource to be read.
+    * @return Either an input stream for the resource or an exception.
+    */
   def provideInputStream(resource: R): Either[Exception, InputStream]
 
+  /**
+    * Provide an output stream that sends data from to resource.
+    * @param resource The resource to be written.
+    * @return Either an output stream for the resource or an exception.
+    */
   def provideOutputStream(resource: R): Either[Exception, OutputStream]
 }

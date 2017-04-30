@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.view
-
-import scalafx.geometry.Dimension2D
+package devsync
 
 /**
-  * A trait that allows a view to request it's own dimensions.
-  **/
-trait Dimensions {
+  * Contains the main classes for synpchronising devices. The main class is [[devsync.sync.Device]] which will
+  * require instances of the [[devsync.sync.Resource]] and [[devsync.sync.ResourceStreamProvider]] typeclasses.
+  */
+package object sync {
 
-  /**
-    * The dimensions that the main scene should be resized to.
-    */
-  val dimensions: Dimension2D
 }

@@ -21,9 +21,15 @@ import java.io.{Closeable, InputStream, OutputStream}
 import scala.util.Try
 
 /**
-  * Created by alex on 26/03/17
-  **/
+  * Helper methods dealing with I/O.
+  */
 object IO {
+
+  /**
+    * Copy an input stream to an output stream.
+    * @param in The source input stream.
+    * @param out The target output stream.
+    */
   def copy(in: InputStream, out: OutputStream): Unit = {
     val bytes = new Array[Byte](16384) //16kb - Buffer size
     Iterator
@@ -32,8 +38,18 @@ object IO {
       .foreach(read=>out.write(bytes,0,read))
   }
 
-
-  def closingTry[T, C <: Closeable](closeable: => C)(block: C => Either[Exception, T], afterClose: => Unit = {}): Either[Exception, T] = {
+  /**
+    * Try running a block of code, making sure a closeable object is closed afterwards.
+    * @param closeable The [[Closeable]] object to eventually close.
+    * @param block The block of code to run.
+    * @param afterClose The block of code to run after closing the closeable instance.
+    * @tparam T The possible return type.
+    * @tparam C The type of the closeable.
+    * @return Either the result of running the block or an exception.
+    */
+  def closingTry[T, C <: Closeable](closeable: => C)
+                                   (block: C => Either[Exception, T],
+                                    afterClose: => Unit = {}): Either[Exception, T] = {
     try {
       block(closeable)
     }
@@ -46,6 +62,15 @@ object IO {
     }
   }
 
+  /**
+    * Try running a block of code, making sure a closeable object is closed afterwards.
+    * @param closeable The [[Closeable]] object to eventually close.
+    * @param block The block of code to run.
+    * @param afterClose The block of code to run after closing the closeable instance.
+    * @tparam T The possible return type.
+    * @tparam C The type of the closeable.
+    * @return Either the result of running the block or an exception.
+    */
   def closing[T, C <: Closeable](closeable: => C, afterClose: => Unit = {})(block: C => T): Either[Exception, T] = {
     closingTry(closeable)(cl => Right(block(cl)))
   }

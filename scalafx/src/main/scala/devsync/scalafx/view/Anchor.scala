@@ -20,11 +20,20 @@ import scalafx.scene.Node
 import scalafx.scene.layout.AnchorPane
 
 /**
- * Helpers for anchor panes
+ * Helpers for anchor panes.
  * Created by alex on 15/05/15.
  */
 object Anchor {
 
+  /**
+    * Create a new anchor.
+    * @param node The node to wrap.
+    * @param left The left anchor, if any.
+    * @param right The right anchor, if any.
+    * @param top The top anchor, if any.
+    * @param bottom The bottom anchor, if any.
+    * @return A new anchor pane that wraps a node.
+    */
   def newAnchor(
               node: Node,
               left: Option[Double] = None,
@@ -34,6 +43,15 @@ object Anchor {
     children = Seq(anchor(node))
   }
 
+  /**
+    * Add anchor constraints to a node.
+    * @param node The node to add the anchor constraints to.
+    * @param left The left anchor, if any.
+    * @param right The right anchor, if any.
+    * @param top The top anchor, if any.
+    * @param bottom The bottom anchor, if any.
+    * @return The original node.
+    */
   def anchor[N <: Node](
               node: N,
               left: Option[Double] = None,
@@ -47,8 +65,32 @@ object Anchor {
     node
   }
 
+  /**
+    * Wrap a node with an anchor pane which is anchored to the left and right.
+    * @param node The node to wrap.
+    * @return A new anchor pane containing the node.
+    */
   def newHorizontal(node: Node): AnchorPane = newAnchor(node = node, left = Some(0), right = Some(0))
+
+  /**
+    * Wrap a node with an anchor pane which is anchored to the right.
+    * @param node The node to wrap.
+    * @return A new anchor pane containing the node.
+    */
   def newRight(node: Node): AnchorPane = newAnchor(node = node, right = Some(0))
+
+  /**
+    * Wrap a node with an anchor pane which is anchored to each side.
+    * @param node The node to wrap.
+    * @return A new anchor pane containing the node.
+    */
   def newFill(node: Node): AnchorPane = newAnchor(node = node, left = Some(0), right = Some(0), top = Some(0), bottom = Some(0))
+
+  /**
+    * Add anchor constraints to each side of a node.
+    * @param node The node to alter.
+    * @tparam N The type of the node.
+    * @return The original node with anchor constraints added.
+    */
   def fill[N <: Node](node: N): N = anchor(node = node, left = Some(0), right = Some(0), top = Some(0), bottom = Some(0))
 }

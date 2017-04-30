@@ -31,7 +31,7 @@ import android.view.{Gravity, LayoutInflater, View, ViewGroup}
 import android.widget._
 import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
-import devsync.common.Messages
+import devsync.logging.Messages
 import devsync.json.{Changelog, ChangelogItem, IsoDate, RelativePath}
 import devsync.remote.ChangesClient
 import macroid.FullDsl.{text, _}

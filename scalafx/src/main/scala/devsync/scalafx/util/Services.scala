@@ -22,20 +22,45 @@ import java.nio.file.Path
 import devsync.discovery.{ClingFlacManagerDiscovery, FlacManagerDiscovery}
 import devsync.json._
 import devsync.remote.{ChangesClient, ChangesClientImpl}
-import devsync.scalafx.sync.{DeviceDiscoverer, DeviceDiscovererImpl}
+import devsync.scalafx.discovery.{DeviceDiscoverer, DeviceDiscovererImpl}
 import devsync.sync._
 import org.fourthline.cling.DefaultUpnpServiceConfiguration
 
 /**
-  * Created by alex on 09/04/17
+  * Services used throughout device synchronisation.
   **/
 object Services {
 
+  /**
+    * The default [[JsonCodec]] to use.
+    */
   val jsonCodec: JsonCodec = new CirceCodec
+
+  /**
+    * The default [[IsoClock]] to use.
+    */
   val isoClock: IsoClock = SystemIsoClock
+
+  /**
+    * The default [[FlacManagerDiscovery]] to use.
+    */
   val flacManagerDiscovery: FlacManagerDiscovery = new ClingFlacManagerDiscovery(new DefaultUpnpServiceConfiguration())
+
+  /**
+    * The default [[Device]] to use.
+    */
   val device: Device[Path] = new DeviceImpl[Path](jsonCodec, isoClock)
+
+  /**
+    * The default [[DeviceDiscoverer]] to use.
+    */
   val deviceDiscoverer: DeviceDiscoverer = new DeviceDiscovererImpl(device)
+
+  /**
+    * Create a [[ChangesClient]].
+    * @param url The URL of the Flac Manager server.
+    * @return A new [[ChangesClient]] that looks for changes at the given URL.
+    */
   def changesClient(url: URL): ChangesClient = new ChangesClientImpl(jsonCodec, url)
 
 }

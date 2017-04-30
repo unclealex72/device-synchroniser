@@ -30,20 +30,33 @@ import scala.collection.JavaConversions._
 
 
 /**
-  * Created by alex on 14/04/17
+  * The view for a set of changelog items.
   **/
 trait ChangelogView {
 
+  /**
+    * The items to view.
+    * @return A set of [[ChangelogItemModel]]s.
+    */
   def items: ObservableSet[ChangelogItemModel]
 }
 
+/**
+  * Create a new [[ChangelogView]].
+  */
 object ChangelogView extends StrictLogging {
 
   /**
     * Order children by newest first
     */
-  val changelogItemModelOrdering: Ordering[Node with ChangelogItemView] = Ordering.by(-_.model.value.at.date.getTime)
+  private val changelogItemModelOrdering: Ordering[Node with ChangelogItemView] = Ordering.by(-_.model.value.at.date.getTime)
 
+  /**
+    * Create a new [[ChangelogView]]
+    * @param models A set of changelog item models.
+    * @param defaultFont The default font to use.
+    * @return A new [[ChangelogView]]
+    */
   def apply(models: ObservableSet[ChangelogItemModel])(implicit defaultFont: Font): Node with ChangelogView = {
     val children = ObservableBuffer.empty[Node with ChangelogItemView]
 

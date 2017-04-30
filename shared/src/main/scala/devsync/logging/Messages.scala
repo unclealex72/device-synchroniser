@@ -14,19 +14,25 @@
  * limitations under the License.
  */
 
-package devsync.common
+package devsync.logging
 
 import devsync.json.IsoDate
 
 /**
-  * Created by alex on 09/04/17
+  * Contains objects that contain messages that can be displayed to a user.
   **/
 object Messages {
 
+  /**
+    * Messages to do with finding a device.
+    */
   object Discovery {
     val findDevice: String = "Find Device"
   }
 
+  /**
+    * Messages used to show progress during synchronisation.
+    */
   object Sync {
     val notificationTitle: String = "Synchronising"
     def finished(count: Int): String = s"Successfully synchronised $count tracks."
@@ -36,6 +42,9 @@ object Messages {
     val removing: String = "Removing"
   }
 
+  /**
+    * Messages used to show information about [[Changes]]
+    */
   object Changes {
     def maybeLastUpdated(maybeDate: Option[IsoDate]): String = maybeDate match {
       case Some(date) => s"Last updated at ${date.format("HH:mm:ss, EEE d MMM, yyyy")}"

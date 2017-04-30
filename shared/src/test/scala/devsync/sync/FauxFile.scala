@@ -114,7 +114,7 @@ object FauxFile {
       }
     }
 
-    override def findOrCreateFile(fauxFile: FauxFile, mimeType: String, name: String): Either[Exception, FauxFile] = {
+    override def findOrCreateResource(fauxFile: FauxFile, mimeType: String, name: String): Either[Exception, FauxFile] = {
       fauxFile match {
         case d : Directory => Right(d.createFile(mimeType, name))
         case _ => Left(new IOException(s"Cannot create file $name at ${fauxFile.path}"))

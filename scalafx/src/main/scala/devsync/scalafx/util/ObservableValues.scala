@@ -21,17 +21,21 @@ import scalafx.event.subscriptions.Subscription
 
 /**
   * Implicits for observable values
-  *  Created by alex on 12/04/17
   **/
 object ObservableValues {
 
+  /**
+    * Implicits for observable values
+    * @param ov The observable value to enrich.
+    * @tparam T The Scala type that will be returned for this Observable.
+    * @tparam J The Java type to be wrapped by T.
+    */
   implicit class ObservableValueImplicits[T, J](ov: ObservableValue[T, J]) {
 
     /**
-      * A null safe version of onChange that only presents the new value.
-      * @param op
-      * @tparam J
-      * @return
+      * A null safe version of onChange that responds to a value change if it is not null.
+      * @param op The operation to run.
+      * @return A subscription that will be run when the value changes.
       */
     def onAltered(op: J => Unit): Subscription = ov.onChange { (_, oldValue, newValue) =>
       if (newValue != null && newValue != oldValue) op(newValue)

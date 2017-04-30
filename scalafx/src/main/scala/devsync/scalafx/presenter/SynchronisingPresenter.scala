@@ -36,8 +36,14 @@ import scalafx.scene.Parent
 import scalafx.scene.text.Font
 
 /**
-  * Created by alex on 14/04/17
-  **/
+  * The presenter used to show the progress of a synchronisation activity.
+  * @param currentPresenter The current presenter property.
+  * @param serverUrl The URL of the Flac Manager server.
+  * @param devicePath The path of the previously found device.
+  * @param deviceDescriptor The device descriptor for the previously found device.
+  * @param executionContext An execution context used to execute asynchronous tasks.
+  * @param defaultFont The default font to use.
+  */
 case class SynchronisingPresenter(
                               currentPresenter: ObjectProperty[Option[Presenter]],
                               serverUrl: URL,
@@ -45,8 +51,9 @@ case class SynchronisingPresenter(
                               deviceDescriptor: DeviceDescriptor)
                             (implicit executionContext: ExecutionContext, defaultFont: Font) extends Presenter {
 
-  val synchronisingView = SynchronisingView()
-  val initialisingTask: ConstantProgressTask[SynchroniseAction, Int] = ConstantProgressTask.fromFuture[SynchroniseAction, Int] { updates: TaskUpdates[SynchroniseAction, Int] =>
+  private val synchronisingView = SynchronisingView()
+
+  private val initialisingTask: ConstantProgressTask[SynchroniseAction, Int] = ConstantProgressTask.fromFuture[SynchroniseAction, Int] { updates: TaskUpdates[SynchroniseAction, Int] =>
     val changesClient = Services.changesClient(serverUrl)
     val deviceListener = new DeviceListener[Path] {
 
@@ -89,7 +96,13 @@ case class SynchronisingPresenter(
     synchronisingView.totalWork = totalWork.longValue()
   }
 
+  /**
+    * @inheritdoc
+    */
   override def content(): Parent = synchronisingView
 
+  /**
+    * @inheritdoc
+    */
   override def initialise(): Task[_] = initialisingTask
 }

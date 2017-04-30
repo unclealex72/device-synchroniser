@@ -23,7 +23,7 @@ import android.content.{Context, Intent}
 import android.net.Uri
 import android.support.v4.provider.DocumentFile
 import com.typesafe.scalalogging.StrictLogging
-import devsync.common.Messages
+import devsync.logging.Messages
 import devsync.json._
 import devsync.sync.DeviceListener
 import macroid.Contexts

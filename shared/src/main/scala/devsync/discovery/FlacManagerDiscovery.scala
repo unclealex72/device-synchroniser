@@ -23,7 +23,7 @@ import cats.data.EitherT
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
-  * Created by alex on 23/03/17
+  * A trait to allow the discovery of a Flac Manager server on a local network.
   **/
 trait FlacManagerDiscovery {
 

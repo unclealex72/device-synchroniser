@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.view
-
-import scalafx.geometry.Dimension2D
+package devsync.scalafx
 
 /**
-  * A trait that allows a view to request it's own dimensions.
-  **/
-trait Dimensions {
+  * This package contains all the models for this nearly MVP application.
+  */
+package object model {
 
-  /**
-    * The dimensions that the main scene should be resized to.
-    */
-  val dimensions: Dimension2D
 }

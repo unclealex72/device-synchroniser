@@ -65,7 +65,7 @@ object DocumentFileResource {
     /**
       * @inheritdoc
       */
-    override def findOrCreateFile(documentFile: DocumentFile, mimeType: String, name: String): Either[Exception, DocumentFile] =
+    override def findOrCreateResource(documentFile: DocumentFile, mimeType: String, name: String): Either[Exception, DocumentFile] =
       findOrCreate(
         documentFile,
         name,

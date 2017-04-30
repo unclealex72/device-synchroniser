@@ -17,8 +17,23 @@
 package devsync.json
 
 /**
-  * Created by alex on 21/03/17
-  **/
+  * A case class that holds information about a music track.
+  * @param albumArtistSort The album artist used for sorting.
+  * @param albumArtist The album artist of the track.
+  * @param album The album the track is on.
+  * @param artist The artist who play the track.
+  * @param artistSort The artist sort used for sorting.
+  * @param title The name of the track.
+  * @param totalDiscs The total number of discs that comprise the album this track is on.
+  * @param totalTracks The total number of tracks on the disc.
+  * @param discNumber The disc number for this track.
+  * @param albumArtistId The [[http://www.musicbrainz.org MusicBrainz]] ID for the album's artist.
+  * @param albumId The [[http://www.musicbrainz.org MusicBrainz]] ID for the album.
+  * @param artistId The [[http://www.musicbrainz.org MusicBrainz]] ID for the track's artist.
+  * @param trackId The [[http://www.musicbrainz.org MusicBrainz]] ID for the track.
+  * @param asin The [[http://www.amazon.co.uk Amazon]] _ASIN_ for this album, if any.
+  * @param trackNumber The number of this track on the album.
+  */
 case class Tags(
   albumArtistSort: String,
   albumArtist: String,
@@ -36,6 +51,10 @@ case class Tags(
   asin: Option[String],
   trackNumber: Int) {
 
+  /**
+    * Format an album so that it contains the disc number and total number of discs for multi-disc albums.
+    * @return The title of the album formatted as above.
+    */
   def formattedAlbum: String = {
     if (totalDiscs == 1) {
       album
@@ -45,5 +64,9 @@ case class Tags(
     }
   }
 
+  /**
+    * Format a track so that it contains the track number, total number of tracks and track title.
+    * @return A formatted track as described above.
+    */
   def formattedTrack: String = s"$trackNumber/$totalTracks - $title"
 }

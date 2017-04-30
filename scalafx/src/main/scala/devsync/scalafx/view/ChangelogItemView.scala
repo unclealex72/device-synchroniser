@@ -29,18 +29,31 @@ import scalafx.scene.layout.{HBox, VBox}
 import scalafx.scene.text.Font
 
 /**
-  * Created by alex on 14/04/17
+  * The view for showing changelog items.
   **/
 trait ChangelogItemView {
 
+  /**
+    * The model for this view.
+    * @return A read only property.
+    */
   def model: ReadOnlyObjectProperty[ChangelogItemModel]
 
 }
 
+/**
+  * Create a new [[ChangelogItemView]].
+  */
 object ChangelogItemView {
 
   private val defaultHeight: Double = 96
 
+  /**
+    * Create a new [[ChangelogItemView]]
+    * @param _model The model for this view.
+    * @param defaultFont The default font to use.
+    * @return A new [[ChangelogItemView]].
+    */
   def apply(_model: ChangelogItemModel)(implicit defaultFont: Font): Node with ChangelogItemView = {
     val modelProperty = new ReadOnlyObjectProperty[ChangelogItemModel](this, "model", _model)
     val artwork = Artwork(_model.maybeArtwork)

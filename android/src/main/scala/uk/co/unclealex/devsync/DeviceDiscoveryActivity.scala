@@ -23,16 +23,15 @@ import android.os.Bundle
 import android.support.v4.provider.DocumentFile
 import android.view.ViewGroup.LayoutParams._
 import android.widget._
-import devsync.common.{Messages, PassthroughLogging}
-import devsync.sync.DeviceImpl
+import cats.syntax.either._
+import devsync.logging.{Messages, PassthroughLogging}
 import macroid.FullDsl._
 import macroid._
 import uk.co.unclealex.devsync.Async._
+import uk.co.unclealex.devsync.DocumentFileResource._
+import uk.co.unclealex.devsync.IntentHelper._
 
 import scala.util.{Failure, Success}
-import cats.syntax.either._
-import IntentHelper._
-import DocumentFileResource._
 
 /**
   * An activity that shows a progress spinner whilst searching for a Flac Manager server and

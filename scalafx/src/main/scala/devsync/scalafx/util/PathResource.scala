@@ -24,26 +24,41 @@ import devsync.json.RelativePath
 import devsync.sync.{Resource, ResourceStreamProvider}
 
 /**
-  * Created by alex on 09/04/17
+  * The typeclass that allows [[Path]]s to be used as [[Resource]]s.
   **/
 object PathResource {
 
+  /**
+    * The typeclass that allows [[Path]]s to be used as [[Resource]]s.
+    **/
   implicit object PathResourceImplicits extends Resource[Path] with ResourceStreamProvider[Path] {
 
+    /**
+      * @inheritdoc
+      */
     override def canWrite(path: Path): Boolean = Files.isWritable(path)
 
+    /**
+      * @inheritdoc
+      */
     override def find(path: Path, relativePath: RelativePath): Option[Path] = {
       val newPath = relativePath.pathSegments.foldLeft(path)(_.resolve(_))
       Some(newPath).filter(Files.exists(_))
     }
 
-    override def findOrCreateFile(path: Path, mimeType: String, name: String): Either[Exception, Path] = {
+    /**
+      * @inheritdoc
+      */
+    override def findOrCreateResource(path: Path, mimeType: String, name: String): Either[Exception, Path] = {
       tryIO {
         val newPath = path.resolve(name)
         Some(newPath).filter(Files.exists(_)).getOrElse(Files.createFile(newPath))
       }
     }
 
+    /**
+      * @inheritdoc
+      */
     override def mkdir(path: Path, name: String): Either[Exception, Path] = {
       liftTryIO{
         val dir = path.resolve(name)
@@ -61,30 +76,57 @@ object PathResource {
       }
     }
 
+    /**
+      * @inheritdoc
+      */
     override def remove(path: Path): Unit = {
       tryIO(Files.deleteIfExists(path)).getOrElse({})
     }
 
+    /**
+      * @inheritdoc
+      */
     override def parent(path: Path): Option[Path] = {
       Option(path.getParent)
     }
 
+    /**
+      * @inheritdoc
+      */
     override def isEmpty(path: Path): Boolean = {
       tryIO {
         !Files.newDirectoryStream(path).iterator().hasNext
       }.getOrElse(false)
     }
 
+    /**
+      * @inheritdoc
+      */
     override def provideInputStream(path: Path): Either[Exception, InputStream] = {
       tryIO(Files.newInputStream(path))
     }
 
+    /**
+      * @inheritdoc
+      */
     override def provideOutputStream(path: Path): Either[Exception, OutputStream] = {
       tryIO(Files.newOutputStream(path))
     }
 
+    /**
+      * Run a block of code in a try block.
+      * @param block The block of code to run.
+      * @tparam V The type of result to return.
+      * @return Either the result of running the block or an exception if one occurred.
+      */
     def tryIO[V](block: => V): Either[Exception, V] = liftTryIO(Right(block))
 
+    /**
+      * Run a block of code in a try block.
+      * @param block The block of code to run.
+      * @tparam V The type of result to return.
+      * @return Either the result of running the block or an exception if one occurred.
+      */
     def liftTryIO[V](block: => Either[Exception, V]): Either[Exception, V] = {
       try {
         block

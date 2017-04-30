@@ -23,13 +23,28 @@ import scalafx.concurrent.Task
 import scalafx.scene.Parent
 
 /**
-  * Created by alex on 14/04/17
+  * The base trait for presenters. Presenters have content, can be initialised and can also transition to the
+  * next presenter.
   **/
 trait Presenter {
 
+  /**
+    * The content (view) for this presenter.
+    * @return The content (view) for this presenter.
+    */
   def content(): Parent
+
+  /**
+    * Initialise this presenter asynchronously.
+    * @return A task that initialises this presenter.
+    */
   def initialise(): Task[_]
 
+  /**
+    * Transition to the next presenter if one exists.
+    * @param maybeNewPresenter The presenter to transition to or none if there are no more presenters.
+    * @return A function that takes the current presenter property and changes it.
+    */
   def transition(maybeNewPresenter: Option[Presenter]): ObjectProperty[Option[Presenter]] => Unit = currentPresenter => ui {
     currentPresenter.value = maybeNewPresenter
   }

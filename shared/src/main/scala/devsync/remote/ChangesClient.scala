@@ -21,24 +21,46 @@ import java.io.OutputStream
 import devsync.json._
 
 /**
-  * Created by alex on 22/03/17
-  * A trait that can be used to find changes and changelogs
+  * A trait that can be used to find [[Changes]] and [[Changelog]]s from a Flac Manager server.
   **/
 trait ChangesClient {
 
   /**
     * Get the changes for a user since a specific date.
+    * @param user The user to search for.
+    * @param maybeSince The earliest time for changes or none for all changes.
+    * @return Either a [[Changes]] object from the server or an exception.
     */
   def changesSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changes]
 
   /**
-    * Count the number of changelog items for a user since a specific date
+    * Get the changelog for a user since a specific date..
+    * @param user The user to search for.
+    * @param maybeSince The earliest time for changes or none for all changes.
+    * @return Either a [[Changes]] object from the server or an exception.
     */
   def changelogSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changelog]
 
+  /**
+    * Download the music for a track.
+    * @param item The item who's music needs to be downloaded.
+    * @param out An output stream to where the music will be copied.
+    * @return Either [[Unit]] or an exception.
+    */
   def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit]
 
+  /**
+    * Download the tags for a track.
+    * @param item The item who's tags needs to be downloaded.
+    * @return Either the item's [[Tags]] or an exception.
+    */
   def tags(item: HasLinks with HasRelativePath): Either[Exception, Tags]
 
+  /**
+    * Download the album artwork for a track.
+    * @param item The item who's album artwork needs to be downloaded.
+    * @param out An output stream to where the album artwork will be copied.
+    * @return Either [[Unit]] or an exception.
+    */
   def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit]
 }

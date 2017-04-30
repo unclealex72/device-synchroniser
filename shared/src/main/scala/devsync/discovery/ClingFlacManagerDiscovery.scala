@@ -29,6 +29,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /**
   * An instance of [[FlacManagerDiscovery]] that uses [[https://github.com/4thline/cling Cling]]
+  * @param upnpServiceConfiguration The [[UpnpServiceConfiguration]] to use. This is different for Android and desktop.
   **/
 class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfiguration) extends FlacManagerDiscovery with StrictLogging {
 

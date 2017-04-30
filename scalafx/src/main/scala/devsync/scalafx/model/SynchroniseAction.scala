@@ -19,15 +19,26 @@ package devsync.scalafx.model
 import devsync.json.RelativePath
 
 /**
-  * Created by alex on 14/04/17
+  * A model for a synchronisation action.
   **/
 sealed trait SynchroniseAction
 
+/**
+  * A model for an addition.
+  * @param maybeArtwork The artwork if it could be loaded.
+  * @param artist The artist of the track being added.
+  * @param album The album being added.
+  * @param track The name of the track being added.
+  */
 case class SynchroniseAddition(
                                 maybeArtwork: Option[Array[Byte]],
                                 artist: String,
                                 album: String,
                                 track: String) extends SynchroniseAction
 
+/**
+  * A model for a removal.
+  * @param relativePath The relative path of the removal.
+  */
 case class SynchroniseRemoval(relativePath: RelativePath) extends SynchroniseAction
 

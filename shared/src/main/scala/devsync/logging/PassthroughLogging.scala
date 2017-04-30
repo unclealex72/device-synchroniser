@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package devsync.common
+package devsync.logging
 
 import com.typesafe.scalalogging.StrictLogging
 

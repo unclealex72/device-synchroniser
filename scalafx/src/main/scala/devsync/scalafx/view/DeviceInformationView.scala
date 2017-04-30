@@ -32,18 +32,40 @@ import scalafx.geometry.Insets
 import devsync.scalafx.util.ObservableValues._
 
 /**
-  * Created by alex on 14/04/17
+  * The view for showing device information.
   **/
 trait DeviceInformationView {
 
+  /**
+    * Get the ready property.
+    * @return The ready property.
+    */
   def ready: BooleanProperty
-  def ready_=(b: Boolean): Unit = {
-    ready() = b
+
+  /**
+    * Set the ready property.
+    * @param ready The new value of the ready property.
+    */
+  def ready_=(ready: Boolean): Unit = {
+    this.ready() = ready
   }
 }
 
+/**
+  * Create a new [[DeviceInformationView]]
+  */
 object DeviceInformationView {
 
+  /**
+    * Create a new [[DeviceInformationView]]
+    * @param user The user who own's the device.
+    * @param devicePath The location of the device.
+    * @param maybeLastUpdated The last time the device was last updated or none.
+    * @param items A set of changelog items.
+    * @param synchroniseCallback The synchronising code.
+    * @param defaultFont The default font to use.
+    * @return A new [[DeviceInformationView]]
+    */
   def apply(user: String,
             devicePath: Path,
             maybeLastUpdated: Option[IsoDate],

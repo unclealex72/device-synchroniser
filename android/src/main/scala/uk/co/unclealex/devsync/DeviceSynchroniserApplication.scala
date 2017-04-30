@@ -22,7 +22,7 @@ import android.app.Application
 import android.net.http.HttpResponseCache
 import android.util.Log
 import com.typesafe.scalalogging.StrictLogging
-import devsync.common.PassthroughLogging
+import devsync.logging.PassthroughLogging
 
 import scala.util.Try
 

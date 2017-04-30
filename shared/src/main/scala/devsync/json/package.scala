@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.view
-
-import scalafx.geometry.Dimension2D
+package devsync
 
 /**
-  * A trait that allows a view to request it's own dimensions.
-  **/
-trait Dimensions {
+  * Contains the models and the parser for JSON objects used to communicate with the Flac Manager server.
+  */
+package object json {
 
-  /**
-    * The dimensions that the main scene should be resized to.
-    */
-  val dimensions: Dimension2D
 }

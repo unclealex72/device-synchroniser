@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.view
-
-import scalafx.geometry.Dimension2D
+package devsync
 
 /**
-  * A trait that allows a view to request it's own dimensions.
-  **/
-trait Dimensions {
+  * Contains classes to discover an instance of a Flac Manager server on a network. The main interface is
+  * [[devsync.discovery.FlacManagerDiscovery]].
+  */
+package object discovery {
 
-  /**
-    * The dimensions that the main scene should be resized to.
-    */
-  val dimensions: Dimension2D
 }

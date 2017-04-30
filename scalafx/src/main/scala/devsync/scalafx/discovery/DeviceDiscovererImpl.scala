@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.sync
+package devsync.scalafx.discovery
 
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
@@ -29,11 +29,14 @@ import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
-  * Created by alex on 09/04/17
-  * The default device discoverer that looks for a device descriptor in a directory, searching at most n levels down
-  **/
+  * The default implementation of [[DeviceDiscoverer]].
+  * @param device The device filesystem.
+  */
 class DeviceDiscovererImpl(val device: Device[Path]) extends DeviceDiscoverer {
 
+  /**
+    * @inheritdoc
+    */
   override def discover(root: Path, levels: Int)
                        (implicit ec: ExecutionContext): EitherT[Future, Exception, (DeviceDescriptor, Path)] = EitherT {
     Future {

@@ -37,25 +37,36 @@ import scalafx.concurrent.Task
 import scalafx.scene.Parent
 import scalafx.scene.text.Font
 import scalafx.Includes._
+
 /**
-  * Created by alex on 14/04/17
-  **/
+  * A presenter that shows all the changelog items.
+  * @param currentPresenter The current presenter property.
+  * @param serverUrl The URL of the Flac Manager server.
+  * @param devicePath The path of the previously found device.
+  * @param deviceDescriptor The device descriptor for the previously found device.
+  * @param executionContext An execution context used to execute asynchronous tasks.
+  * @param defaultFont The default font to use.
+  */
 case class ChangelogPresenter(
                                currentPresenter: ObjectProperty[Option[Presenter]],
                                serverUrl: URL,
                                devicePath: Path,
                                deviceDescriptor: DeviceDescriptor)
                              (implicit executionContext: ExecutionContext, defaultFont: Font) extends Presenter {
-  val items: ObservableSet[ChangelogItemModel] = ObservableSet.empty[ChangelogItemModel]
-  val deviceInformationView =
+
+  private val items: ObservableSet[ChangelogItemModel] = ObservableSet.empty[ChangelogItemModel]
+
+  private val deviceInformationView =
     DeviceInformationView(
       deviceDescriptor.user,
       devicePath,
       deviceDescriptor.maybeLastModified,
       items,
       transition(Some(SynchronisingPresenter(currentPresenter, serverUrl, devicePath, deviceDescriptor)))(currentPresenter))
-  val changesClient: ChangesClient = Services.changesClient(serverUrl)
-  val changelogTask: ConstantProgressTask[ChangelogItemModel, Int] =
+
+  private val changesClient: ChangesClient = Services.changesClient(serverUrl)
+
+  private val changelogTask: ConstantProgressTask[ChangelogItemModel, Int] =
     ConstantProgressTask.fromFuture[ChangelogItemModel, Int] { updates: TaskUpdates[ChangelogItemModel, Int] =>
     EitherT(Future(changesClient.changelogSince(deviceDescriptor.user, deviceDescriptor.maybeLastModified))).map { changelog =>
       changelog.items.foreach { item =>
@@ -87,6 +98,14 @@ case class ChangelogPresenter(
     deviceInformationView.ready = true
   }
 
+  /**
+    * @inheritdoc
+    */
   def content(): Parent = deviceInformationView
+
+
+  /**
+    * @inheritdoc
+    */
   def initialise(): Task[_] = changelogTask
 }

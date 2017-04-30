@@ -19,7 +19,16 @@ package devsync.scalafx.model
 import devsync.json.{IsoDate, RelativePath}
 
 /**
-  * Created by alex on 15/04/17
+  * A model for a [[devsync.json.ChangelogItem]]
+  * @param at The time of the change.
+  * @param maybeArtwork The album artwork if it could be loaded.
+  * @param relativePathOrAlbum Either the relative path of the change or the album.
   **/
 case class ChangelogItemModel(at: IsoDate, maybeArtwork: Option[Array[Byte]], relativePathOrAlbum: Either[RelativePath, Album])
+
+/**
+  * A model for an album.
+  * @param album The name of the album.
+  * @param artist The album's artist.
+  */
 case class Album(album: String, artist: String)

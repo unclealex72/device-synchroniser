@@ -22,10 +22,14 @@ import scalafx.scene.image.Image
 
 /**
   * Generate artwork from a source.
-  * Created by alex on 11/04/17
   **/
 object Artwork {
 
+  /**
+    * Generate artwork from a raw byte array or use a default image.
+    * @param maybeData The artwork data, if any.
+    * @return An image that contains either the supplied artwork data or a default image.
+    */
   def apply(maybeData: Option[Array[Byte]]): Image = {
     maybeData match {
       case Some(data) => new Image(new ByteArrayInputStream(data))
@@ -33,5 +37,9 @@ object Artwork {
     }
   }
 
+  /**
+    * Get the default image.
+    * @return The default image.
+    */
   def empty: Image = apply(None)
 }
