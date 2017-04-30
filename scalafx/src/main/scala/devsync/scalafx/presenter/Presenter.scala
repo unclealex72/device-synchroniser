@@ -16,8 +16,11 @@
 
 package devsync.scalafx.presenter
 
-import devsync.scalafx.DeviceSynchroniserPlus.ui
+import cats.data.EitherT
+import cats.instances.future._
 
+import scala.concurrent.{ExecutionContext, Future}
+import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 import scalafx.concurrent.Task
 import scalafx.scene.Parent
@@ -41,12 +44,25 @@ trait Presenter {
   def initialise(): Task[_]
 
   /**
+    * Run a block of code on the UI thread.
+    * @param callback The callback to execute on the UI thread.
+    * @return Eventually either [[Unit]] or an exception.
+    */
+  def ui(callback: =>Unit)(implicit ec: ExecutionContext): EitherT[Future, Exception, Unit] =
+    EitherT.right[Future, Exception, Unit] {
+      Platform.runLater(callback)
+      Future.successful()
+  }
+
+  /**
     * Transition to the next presenter if one exists.
     * @param maybeNewPresenter The presenter to transition to or none if there are no more presenters.
-    * @return A function that takes the current presenter property and changes it.
+    * @param currentPresenterProperty A property holding the current presenter.
+    * @param ec An execution context used to run the transition task.
     */
-  def transition(maybeNewPresenter: Option[Presenter]): ObjectProperty[Option[Presenter]] => Unit = currentPresenter => ui {
-    currentPresenter.value = maybeNewPresenter
+  def transition(maybeNewPresenter: Option[Presenter], currentPresenterProperty: ObjectProperty[Option[Presenter]])
+                (implicit ec: ExecutionContext): Unit = ui {
+    currentPresenterProperty.value = maybeNewPresenter
   }
 
 }

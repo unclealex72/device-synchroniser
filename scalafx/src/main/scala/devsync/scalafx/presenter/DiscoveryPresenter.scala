@@ -46,7 +46,7 @@ case class DiscoveryPresenter(currentPresenter: ObjectProperty[Option[Presenter]
       _ <- updater.updateMessageF("Searching for a device")
       deviceDescriptorAndPath <- Services.deviceDiscoverer.discover(Paths.get("/media", System.getProperty("user.name")), 2)
     } yield {
-      transition(Some(ChangelogPresenter(currentPresenter, url, deviceDescriptorAndPath._2, deviceDescriptorAndPath._1)))(currentPresenter)
+      transition(Some(ChangelogPresenter(currentPresenter, url, deviceDescriptorAndPath._2, deviceDescriptorAndPath._1)), currentPresenter)
     }
   }
 

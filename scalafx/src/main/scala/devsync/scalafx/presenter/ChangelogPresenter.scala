@@ -62,7 +62,7 @@ case class ChangelogPresenter(
       devicePath,
       deviceDescriptor.maybeLastModified,
       items,
-      transition(Some(SynchronisingPresenter(currentPresenter, serverUrl, devicePath, deviceDescriptor)))(currentPresenter))
+      transition(Some(SynchronisingPresenter(currentPresenter, serverUrl, devicePath, deviceDescriptor)), currentPresenter))
 
   private val changesClient: ChangesClient = Services.changesClient(serverUrl)
 

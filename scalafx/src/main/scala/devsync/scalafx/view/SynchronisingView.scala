@@ -143,4 +143,4 @@ object SynchronisingView {
       override def action: ObjectProperty[Option[SynchroniseAction]] = _action
     }
   }
-}
+} 

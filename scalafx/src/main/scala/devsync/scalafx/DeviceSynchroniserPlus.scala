@@ -16,8 +16,6 @@
 
 package devsync.scalafx
 
-import cats.data.EitherT
-import cats.instances.future._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.scalafx.presenter.{DiscoveryPresenter, Presenter}
 import devsync.scalafx.util.ObservableValues._
@@ -39,12 +37,7 @@ import scalafx.scene.text.Font
   **/
 object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
 
-  private implicit val defaultFont: Font = new Font("Ubuntu", 18)
-
-  private def ui(callback: =>Unit): EitherT[Future, Exception, Unit] = EitherT.right {
-    Platform.runLater(callback)
-    Future.successful()
-  }
+  private implicit val defaultFont: Font = new Font(18)
 
   private val observableState: ObjectProperty[Option[Presenter]] = ObjectProperty(None)
 
