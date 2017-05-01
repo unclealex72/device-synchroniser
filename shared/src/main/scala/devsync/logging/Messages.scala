@@ -47,8 +47,8 @@ object Messages {
     */
   object Changes {
     def maybeLastUpdated(maybeDate: Option[IsoDate]): String = maybeDate match {
-      case Some(date) => s"Last updated at ${date.format("HH:mm:ss, EEE d MMM, yyyy")}"
-      case _ => "Never updated"
+      case Some(date) => s"This device was last updated at ${date.format("HH:mm:ss, EEE d MMM, yyyy")}"
+      case _ => "This device has never been updated"
     }
     def changes(count: Int): String = count match {
       case 0 => "There are no changes"

@@ -192,18 +192,6 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
   }
 
   /**
-    * An abstract base class used to create extractors for different UI components.
-    * @param id The ID of the component.
-    * @tparam V The type of the component.
-    */
-  abstract class ViewExtractor[V <: View](val id: Int) {
-    def unapply(view: View): Option[V] = view match {
-      case v: V if v.getId == id => Some(v)
-      case _ => None
-    }
-  }
-
-  /**
     * An extractor for the change count view.
     */
   object ChangeCountView extends ViewExtractor[TextView](R.id.changeCountView)

@@ -67,7 +67,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
                                                                executionContext: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]] = {
     Future(deviceListener.synchronisingStarting())
     reloadDeviceDescriptor(root) match {
-      case Right((deviceDescriptor, _)) =>
+      case Right(deviceDescriptor) =>
         new Synchroniser(root, changesClient, deviceListener, deviceDescriptor).synchronise.map { result =>
           result.leftMap(ewmi => (ewmi.e, ewmi.maybeIdx))
         }
