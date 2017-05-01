@@ -21,27 +21,21 @@ import android.content.{Context, Intent}
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.provider.DocumentFile
-import android.view.ViewGroup.LayoutParams._
-import android.widget._
+import android.widget.ViewSwitcher
 import cats.syntax.either._
-import devsync.logging.{Messages, PassthroughLogging}
-import macroid.FullDsl._
+import devsync.logging.PassthroughLogging
 import macroid._
 import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
 
-import scala.util.{Failure, Success}
-
+import scala.concurrent.duration._
+import scala.util.Success
 /**
   * An activity that shows a progress spinner whilst searching for a Flac Manager server and
   * device descriptor file.
   */
 class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with PassthroughLogging {
-
-  var findDeviceButton: Option[Button] = slot[Button]
-  var progressBar: Option[ProgressBar] = slot[ProgressBar]
-  var errorMessage: Option[TextView] = slot[TextView]
 
   /**
     * @inheritdoc
@@ -83,13 +77,19 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
           show
       case Right(deviceDescriptorAndUri) =>
         val dev = getIntent.getExtras.getBoolean("FLAC_DEV")
-        Ui.run(progressBar <~ show).flatMap { _ => Services.flacManagerDiscovery.discover(dev).value }.onCompleteUi {
+        Services.flacManagerDiscovery.discover(dev, 30.seconds).value.onComplete {
           case Success(Right(url)) =>
-            Ui(next(deviceDescriptorAndUri, url.toString))
-          case Success(Left(e)) =>
-            errorMessage <~ text(e.getMessage) <~ show
-          case Failure(e) =>
-            errorMessage <~ text(e.getMessage) <~ show
+            Ui(next(deviceDescriptorAndUri, url.toString)).run
+          case _ =>
+            DialogBuilder.
+              title(R.string.no_flac_manager_service_title).
+              message(R.string.no_flac_manager_service_message).
+              positiveButton(R.string.yes) {
+                processDeviceDescriptor(Some(deviceDescriptorAndUri.uri))
+              }.
+              negativeButton(R.string.no) {
+                this.finishAndRemoveTask()
+              }.show
         }
     }
   }
@@ -121,5 +121,4 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
       putServerUrl(serverUrl)
     startActivity(intent)
   }
-
 }

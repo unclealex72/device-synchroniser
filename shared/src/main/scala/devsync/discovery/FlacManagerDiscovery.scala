@@ -20,6 +20,7 @@ import java.net.URL
 
 import cats.data.EitherT
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -30,8 +31,9 @@ trait FlacManagerDiscovery {
   /**
     * Try and find a flac manager on the local network.
     * @param dev True if looking for a development server, false otherwise.
+    * @param timeout The amount to time to search before giving up.
     * @param ec An execution context used for running future events.
     * @return A future eventually containing the root url or an error.
     */
-  def discover(dev: Boolean)(implicit ec: ExecutionContext): EitherT[Future, Exception, URL]
+  def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): EitherT[Future, Exception, URL]
 }

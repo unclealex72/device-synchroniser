@@ -93,7 +93,7 @@ case class DialogBuilder(
   def showUi(implicit contextWrapper: ContextWrapper): Ui[Unit] = Ui {
     val builder = new AlertDialog.Builder(contextWrapper.bestAvailable)
     maybeTitle.foreach(_.fold(builder.setTitle, builder.setTitle))
-    maybeMessage.foreach(_.fold(builder.setTitle, builder.setTitle))
+    maybeMessage.foreach(_.fold(builder.setMessage, builder.setMessage))
     maybePositiveDialogButton.foreach(_.build(builder.setPositiveButton, builder.setPositiveButton))
     maybeNegativeDialogButton.foreach(_.build(builder.setNegativeButton, builder.setNegativeButton))
     builder.create().show()

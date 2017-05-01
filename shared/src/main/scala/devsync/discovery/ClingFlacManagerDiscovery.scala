@@ -16,6 +16,7 @@
 
 package devsync.discovery
 import java.net.URL
+import java.util.concurrent.TimeoutException
 
 import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
@@ -25,6 +26,7 @@ import org.fourthline.cling.model.types.{UDADeviceType, UDAServiceId}
 import org.fourthline.cling.registry.{DefaultRegistryListener, Registry}
 import org.fourthline.cling.{UpnpServiceConfiguration, UpnpServiceImpl}
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /**
@@ -36,7 +38,7 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
   /**
     * @inheritdoc
     */
-  override def discover(dev: Boolean)(implicit ec: ExecutionContext): EitherT[Future, Exception, URL] = EitherT {
+  override def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): EitherT[Future, Exception, URL] = EitherT {
 
     val urlPromise: Promise[URL]  = Promise()
     val upnpService = new UpnpServiceImpl(upnpServiceConfiguration)
@@ -56,9 +58,15 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
       }
     })
     upnpService.getControlPoint.search(new UDADeviceTypeHeader(udaType))
-    urlPromise.future.map { url =>
+    val timeoutFuture: Future[Either[Exception, URL]] = Future {
+      Thread.sleep(timeout.toMillis)
+      throw new TimeoutException("Could not find a Flac Manager server within " + timeout)
+    }
+    val urlFuture: Future[Either[Exception, URL]] = urlPromise.future.map(Right(_))
+    val timingOutUrlFuture = Future.firstCompletedOf(Seq(timeoutFuture, urlFuture))
+    timingOutUrlFuture.map { value =>
       Future { upnpService.shutdown() }
-      Right(url)
+      value
     }.recover {
       case e: Exception => Left(e)
     }

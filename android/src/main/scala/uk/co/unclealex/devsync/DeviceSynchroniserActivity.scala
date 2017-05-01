@@ -39,6 +39,7 @@ import macroid.extras.ImageViewTweaks._
 import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
+import uk.co.unclealex.devsync.ViewSwitcherHelper._
 
 import scala.concurrent.Future
 
@@ -59,15 +60,22 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     implicit val resourceStreamProvider: DocumentFileResourceStreamProvider = new DocumentFileResourceStreamProvider()
     val intent = getIntent
     val resourceUri = intent.resourceUri
+
     Services.device.reloadDeviceDescriptor(DocumentFile.fromTreeUri(this, Uri.parse(resourceUri))) match {
       case Right(deviceDescriptor) =>
+        def lastUpdated(t: TextView) = {
+          t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
+        }
+
         if (deviceDescriptor != intent.deviceDescriptor) {
           intent.putDeviceDescriptor(deviceDescriptor)
           val serverUrl = intent.serverUrl
           val rootView = findViewById(R.id.synchronise_content)
           def setupGui(): Ui[_] = {
             Transformer {
-              case LastUpdatedView(t) => t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
+              case MainViewSwitcher(v) => v.showChildWithId(R.id.changes_layout)
+              case LastUpdatedView(t) => lastUpdated(t)
+              case UpToDateLastUpdatedView(t) => lastUpdated(t)
               case ChangeCountView(t) => t <~ text(Messages.Changes.changes(0))
               case SynchroniseButtonView(b) => b <~ disable <~ On.click {
                 val synchroniseIntent =
@@ -97,6 +105,8 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
                   case ChangeCountView(t) => t <~ text(Messages.Changes.changes(changelog.items.size))
                   case SynchroniseButtonView(b) =>
                     if (changelog.items.isEmpty) b <~ disable <~ hide else b <~ enable <~ show
+                  case MainViewSwitcher(v) if changelog.items.isEmpty =>
+                    v.showChildWithId(R.id.up_to_date_layout)
                 }(rootView)
               case Left(e) =>
                 logger.error("Could not get the list of changes.", e)
@@ -194,12 +204,17 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
   /**
     * An extractor for the change count view.
     */
-  object ChangeCountView extends ViewExtractor[TextView](R.id.changeCountView)
+  object ChangeCountView extends ViewExtractor[TextView](R.id.change_count)
 
   /**
     * An extractor for the last updated view.
     */
-  object LastUpdatedView extends ViewExtractor[TextView](R.id.lastUpdatedView)
+  object LastUpdatedView extends ViewExtractor[TextView](R.id.last_updated)
+
+  /**
+    * An extractor for the up to date last updated view.
+    */
+  object UpToDateLastUpdatedView extends ViewExtractor[TextView](R.id.up_to_date_last_updated)
 
   /**
     * An extractor for the synchronise button.
@@ -210,4 +225,9 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     * An extractor for the changes container.
     */
   object ChangesContainerView extends ViewExtractor[RecyclerView](R.id.recycler)
+
+  /**
+    * An extractor for the top view switcher.
+    */
+  object MainViewSwitcher extends ViewExtractor[ViewSwitcher](R.id.view_switcher)
 }

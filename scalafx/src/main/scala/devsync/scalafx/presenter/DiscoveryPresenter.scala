@@ -27,7 +27,7 @@ import scalafx.beans.property.ObjectProperty
 import scalafx.concurrent.Task
 import scalafx.scene.{Node, Parent}
 import scalafx.scene.text.Font
-
+import scala.concurrent.duration._
 /**
   * The presenter used to discover the location of the Flac Manager server and the location of a user's device.
   * @param currentPresenter The current presenter property.
@@ -42,11 +42,17 @@ case class DiscoveryPresenter(currentPresenter: ObjectProperty[Option[Presenter]
   private val initialisingTask: ConstantProgressTask[Unit, Unit] = ConstantProgressTask.fromFuture[Unit, Unit] { (updater: TaskUpdates[Unit, Unit]) =>
     for {
       _ <- updater.updateMessageF("Searching for a Flac Manager server")
-      url <- Services.flacManagerDiscovery.discover(Option(System.getenv("FLAC_DEV")).isDefined)
+      url <- Services.flacManagerDiscovery.discover(Option(System.getenv("FLAC_DEV")).isDefined, 30.seconds)
       _ <- updater.updateMessageF("Searching for a device")
       deviceDescriptorAndPath <- Services.deviceDiscoverer.discover(Paths.get("/media", System.getProperty("user.name")), 2)
     } yield {
-      transition(Some(ChangelogPresenter(currentPresenter, url, deviceDescriptorAndPath._2, deviceDescriptorAndPath._1)), currentPresenter)
+      transition(
+        Some(ChangelogPresenter(
+          currentPresenter,
+          url,
+          deviceDescriptorAndPath._2,
+          deviceDescriptorAndPath._1)),
+        currentPresenter)
     }
   }
 
