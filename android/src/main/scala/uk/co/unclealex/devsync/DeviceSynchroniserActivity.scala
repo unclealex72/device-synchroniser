@@ -64,7 +64,7 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
         if (deviceDescriptor != intent.deviceDescriptor) {
           intent.putDeviceDescriptor(deviceDescriptor)
           val serverUrl = intent.serverUrl
-          val rootView = findViewById(R.id.content)
+          val rootView = findViewById(R.id.synchronise_content)
           def setupGui(): Ui[_] = {
             Transformer {
               case LastUpdatedView(t) => t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))

@@ -48,24 +48,7 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     */
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-
-    // the layout goes here
-    setContentView {
-      //
-      Ui.get {
-        l[LinearLayout](
-          w[ProgressBar] <~ wire(progressBar) <~ lp[LinearLayout](MATCH_PARENT, WRAP_CONTENT) <~ hide,
-          w[Button] <~ wire(findDeviceButton) <~ text(Messages.Discovery.findDevice) <~ hide <~ On.click {
-            Ui {
-              val intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-              intent.setFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-              startActivityForResult(intent, 0)
-            }
-          },
-          w[TextView] <~ wire(errorMessage) <~ hide
-        ) <~ vertical
-      }
-    }
+    setContentView(R.layout.device_discovery_activity)
     val prefs = getPreferences(Context.MODE_PRIVATE)
     val maybeDeviceUri = Option(prefs.getString(Constants.Prefs.resourceUri, null))
     processDeviceDescriptor(maybeDeviceUri)
@@ -89,7 +72,15 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
       }
     tryDeviceDescriptorAndUri match {
       case Left(e) =>
-        Ui.run((findDeviceButton <~ show) ~ (errorMessage <~ text(e.getMessage) <~ show))
+        DialogBuilder.
+          title(R.string.no_device_descriptor_title).
+          message(Seq(e.getMessage, "Please search").mkString("\n")).
+          positiveButton(R.string.search) {
+            val intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            intent.setFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            startActivityForResult(intent, 0)
+          }.
+          show
       case Right(deviceDescriptorAndUri) =>
         val dev = getIntent.getExtras.getBoolean("FLAC_DEV")
         Ui.run(progressBar <~ show).flatMap { _ => Services.flacManagerDiscovery.discover(dev).value }.onCompleteUi {
