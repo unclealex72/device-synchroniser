@@ -18,27 +18,26 @@ package uk.co.unclealex.devsync
 
 import java.io.ByteArrayOutputStream
 import java.net.URL
-import java.text.SimpleDateFormat
 
-import android.app.Activity
-import android.content.Intent
+import android.content.{DialogInterface, Intent}
+import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
-import android.support.v7.app.AppCompatActivity
+import android.support.v4.provider.DocumentFile
+import android.support.v7.app.{AlertDialog, AppCompatActivity}
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
-import android.view.ViewGroup.LayoutParams
 import android.view.{Gravity, LayoutInflater, View, ViewGroup}
 import android.widget._
 import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
+import devsync.json._
 import devsync.logging.Messages
-import devsync.json.{Changelog, ChangelogItem, IsoDate, RelativePath}
 import devsync.remote.ChangesClient
 import macroid.FullDsl.{text, _}
 import macroid._
 import macroid.extras.ImageViewTweaks._
-import macroid.extras.FloatingActionButtonTweaks._
 import uk.co.unclealex.devsync.Async._
+import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
 
 import scala.concurrent.Future
@@ -50,55 +49,78 @@ import scala.concurrent.Future
 class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppCompatActivity] with StrictLogging {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
-    val intent = getIntent
-    val deviceDescriptor = intent.deviceDescriptor
-    val resourceUri = intent.resourceUri
-    val serverUrl = intent.serverUrl
     super.onCreate(savedInstanceState)
     setContentView(R.layout.device_synchroniser_activity)
-    val rootView = findViewById(R.id.content)
-    def setupGui(): Ui[_] = {
-      Transformer {
-        case LastUpdatedView(t) => t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
-        case ChangeCountView(t) => t <~ text(Messages.Changes.changes(0))
-        case SynchroniseButtonView(b) => b <~ disable <~ On.click {
-          val synchroniseIntent = new Intent(this, classOf[SynchroniseService])
-          synchroniseIntent.put(deviceDescriptor, resourceUri, serverUrl)
-          this.startService(synchroniseIntent)
-          toast(Messages.Changes.synchronisationStarted) <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
-        }
-      }(rootView)
-    }
-    def updateChangelog(): Future[_] = {
-      val changesClient = Services.changesClient(new URL(serverUrl))
-      populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).mapUi {
-        case Right(changelog) if changelog.items.nonEmpty =>
-          Transformer {
-            case ChangesContainerView(rv) =>
-              rv.setLayoutManager {
-                val llm = new LinearLayoutManager(this)
-                llm.setOrientation(LinearLayoutManager.VERTICAL)
-                llm
-              }
-              rv.setHasFixedSize(true)
-              rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
-              rv <~ show
-            case ChangeCountView(t) => t <~ text(Messages.Changes.changes(changelog.items.size))
-            case SynchroniseButtonView(b) => b <~ enable
-          }(rootView)
-        case Right(changelog) if changelog.items.isEmpty =>
-          dialog("Empty")
-        case Left(e) =>
-          logger.error("Could not get the list of changes.", e)
-          dialog(e.getMessage)
-      }
-    }
-    setupGui().run.flatMap(_ => updateChangelog())
   }
 
 
+  override def onResume(): Unit = {
+    super.onResume()
+    implicit val resourceStreamProvider: DocumentFileResourceStreamProvider = new DocumentFileResourceStreamProvider()
+    val intent = getIntent
+    val resourceUri = intent.resourceUri
+    Services.device.reloadDeviceDescriptor(DocumentFile.fromTreeUri(this, Uri.parse(resourceUri))) match {
+      case Right(deviceDescriptor) =>
+        if (deviceDescriptor != intent.deviceDescriptor) {
+          intent.putDeviceDescriptor(deviceDescriptor)
+          val serverUrl = intent.serverUrl
+          val rootView = findViewById(R.id.content)
+          def setupGui(): Ui[_] = {
+            Transformer {
+              case LastUpdatedView(t) => t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
+              case ChangeCountView(t) => t <~ text(Messages.Changes.changes(0))
+              case SynchroniseButtonView(b) => b <~ disable <~ On.click {
+                val synchroniseIntent =
+                  new Intent(this, classOf[SynchroniseService]).
+                    putDeviceDescriptor(deviceDescriptor).
+                    putResourceUri(resourceUri).
+                    putServerUrl(serverUrl)
+                this.startService(synchroniseIntent)
+                toast(Messages.Changes.synchronisationStarted) <~ gravity(Gravity.CENTER, xOffset = 3.dp) <~ fry
+              }
+            }(rootView)
+          }
+          def updateChangelog(): Future[_] = {
+            val changesClient = Services.changesClient(new URL(serverUrl))
+            populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).mapUi {
+              case Right(changelog) =>
+                Transformer {
+                  case ChangesContainerView(rv) =>
+                    rv.setLayoutManager {
+                      val llm = new LinearLayoutManager(this)
+                      llm.setOrientation(LinearLayoutManager.VERTICAL)
+                      llm
+                    }
+                    rv.setHasFixedSize(true)
+                    rv.setAdapter(new ChangelogItemAdapter(changesClient, changelog))
+                    rv <~ show
+                  case ChangeCountView(t) => t <~ text(Messages.Changes.changes(changelog.items.size))
+                  case SynchroniseButtonView(b) =>
+                    if (changelog.items.isEmpty) b <~ disable <~ hide else b <~ enable <~ show
+                }(rootView)
+              case Left(e) =>
+                logger.error("Could not get the list of changes.", e)
+                dialog(e.getMessage)
+            }
+          }
+          setupGui().run.flatMap(_ => updateChangelog())
+        }
+      case Left(_) =>
+        val builder = new AlertDialog.Builder(this)
+        builder.setMessage(R.string.no_device_descriptor_message).setTitle(R.string.no_device_descriptor_title)
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+          def onClick(dialog: DialogInterface , id: Int) {
+            finishAndRemoveTask()
+          }
+        })
+        val dialog = builder.create
+        dialog.show()
+    }
+  }
+
   /**
     * A recycler view adaptor to show changelog items.
+ *
     * @param changesClient The [[ChangesClient]] used to get changes.
     * @param changelog The changelog for this device.
     */

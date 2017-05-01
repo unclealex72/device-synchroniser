@@ -51,11 +51,27 @@ object IntentHelper {
     }
 
     /**
+      * Set the device descriptor in an intent.
+      * @param deviceDescriptor The value to set.
+      */
+    def putDeviceDescriptor(deviceDescriptor: DeviceDescriptor): Intent = {
+      intent.putExtra(Constants.Intent.deviceDescriptor, deviceDescriptor)
+    }
+
+    /**
       * Get the resource URI of a device descriptor from an intent.
       * @return A resource URI of a device descriptor.
       */
     def resourceUri: String = {
       intent.getExtras.getString(Constants.Intent.resourceUri)
+    }
+
+    /**
+      * Set the resource URI in an intent.
+      * @param resourceUri The value to set.
+      */
+    def putResourceUri(resourceUri: String): Intent = {
+      intent.putExtra(Constants.Intent.resourceUri, resourceUri)
     }
 
     /**
@@ -65,5 +81,14 @@ object IntentHelper {
     def serverUrl: String = {
       intent.getExtras.getString(Constants.Intent.serverUrl)
     }
+
+    /**
+      * Set the server URL in an intent.
+      * @param serverUrl The value to set.
+      */
+    def putServerUrl(serverUrl: String): Intent = {
+      intent.putExtra(Constants.Intent.serverUrl, serverUrl)
+    }
+
   }
 }

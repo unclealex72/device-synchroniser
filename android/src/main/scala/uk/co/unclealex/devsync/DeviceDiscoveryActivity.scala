@@ -124,9 +124,10 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     * @param serverUrl The URL of the Flac Manager server.
     */
   def next(deviceDescriptorAndUri: DeviceDescriptorAndUri, serverUrl: String): Unit = {
-    val intent = new Intent(this, classOf[DeviceSynchroniserActivity])
-    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK)
-    intent.put(deviceDescriptorAndUri.deviceDescriptor, deviceDescriptorAndUri.uri, serverUrl)
+    val intent = new Intent(this, classOf[DeviceSynchroniserActivity]).
+      setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK).
+      putResourceUri(deviceDescriptorAndUri.uri).
+      putServerUrl(serverUrl)
     startActivity(intent)
   }
 

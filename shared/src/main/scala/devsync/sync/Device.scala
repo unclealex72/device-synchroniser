@@ -52,12 +52,25 @@ trait Device[R] {
   /**
     * Find a [[DeviceDescriptor]] for this device.
     * @param roots A list of root directories to search.
+    * @param resource A typeclass with file-like properties.
+    * @param resourceStreamProvider A typeclass used to get a stream of data from a resource.
     * @return Either a [[DeviceDescriptor]] and its location or an exception if one could not be found.
     */
   def findDeviceDescriptor(roots: Iterable[R])
                           (implicit resource: Resource[R],
                            resourceStreamProvider: ResourceStreamProvider[R])
   : Either[Exception, (DeviceDescriptor, R)]
+
+  /**
+    * Reload a device descriptor.
+    * @param location The location of the directory containing the device descriptor.
+    * @param resource A typeclass with file-like properties.
+    * @param resourceStreamProvider A typeclass used to get a stream of data from a resource.
+    * @return A new device descriptor or an exception.
+    */
+  def reloadDeviceDescriptor(location: R)
+                            (implicit resource: Resource[R],
+                             resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor]
 }
 
 trait DeviceListener[R] {

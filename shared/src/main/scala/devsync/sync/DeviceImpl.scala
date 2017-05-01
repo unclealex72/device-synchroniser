@@ -66,7 +66,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
                                                                resourceStreamProvider: ResourceStreamProvider[R],
                                                                executionContext: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]] = {
     Future(deviceListener.synchronisingStarting())
-    findDeviceDescriptor(Seq(root)) match {
+    reloadDeviceDescriptor(root) match {
       case Right((deviceDescriptor, _)) =>
         new Synchroniser(root, changesClient, deviceListener, deviceDescriptor).synchronise.map { result =>
           result.leftMap(ewmi => (ewmi.e, ewmi.maybeIdx))
@@ -332,12 +332,6 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       }
     }
 
-    def readDeviceDescriptor(deviceDescriptorResource: R): Either[Exception, DeviceDescriptor] = {
-      resource.readFrom(deviceDescriptorResource, in => {
-        jsonCodec.parseDeviceDescriptor(Source.fromInputStream(in).mkString)
-      })
-    }
-
     def canWriteDeviceDescriptorResource(deviceDescriptorResource: R): Either[Exception, R] = {
       if (resource.canWrite(deviceDescriptorResource)) {
         Right(deviceDescriptorResource)
@@ -354,9 +348,29 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
         case _: Exception => for {
           deviceDescriptorResource <- findDeviceDescriptorResource(root)
           _ <- canWriteDeviceDescriptorResource(deviceDescriptorResource)
-          deviceDescriptor <- readDeviceDescriptor(deviceDescriptorResource)
+          deviceDescriptor <- loadDeviceDescriptor(deviceDescriptorResource)
         } yield (deviceDescriptor, root)
       }
+    }
+  }
+
+  private def loadDeviceDescriptor(deviceDescriptorResource: R)
+                                  (implicit resource: Resource[R],
+                                   resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor] = {
+    resource.readFrom(deviceDescriptorResource, in => {
+      jsonCodec.parseDeviceDescriptor(Source.fromInputStream(in).mkString)
+    })
+
+  }
+  /**
+    * @inheritdoc
+    */
+  override def reloadDeviceDescriptor(location: R)
+                                     (implicit resource: Resource[R],
+                                      resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor] = {
+    resource.find(location, RelativePath(DESCRIPTOR_FILENAME)) match {
+      case Some(deviceDescriptorResource) => loadDeviceDescriptor(deviceDescriptorResource)
+      case None => Left(new IllegalArgumentException(s"Cannot find a device descriptor at $location"))
     }
   }
 }

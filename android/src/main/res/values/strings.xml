@@ -16,6 +16,9 @@
   -->
 
 <resources>
+    <string name="ok">OK</string>
     <string name="album_cover_description">Album Cover</string>
     <string name="app_name">Device Synchroniser+</string>
+    <string name="no_device_descriptor_message">Could not find a device descriptor</string>
+    <string name="no_device_descriptor_title">Device descriptor missing!</string>
 </resources>
