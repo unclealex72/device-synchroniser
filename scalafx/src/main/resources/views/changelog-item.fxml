@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.JFXButton?>
-<?import com.jfoenix.controls.JFXListView?>
-<?import com.jfoenix.controls.JFXProgressBar?>
-<?import com.jfoenix.controls.JFXScrollPane?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
-
 <!--
   ~ Copyright 2017 Alex Jones
   ~
@@ -30,10 +16,19 @@
   ~ limitations under the License.
   -->
 
+<?import com.jfoenix.controls.JFXProgressBar?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
 <BorderPane
-    stylesheets="@../css/jfoenix-components.css"
-    style="-fx-background-radius: 8; -fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0.5, 0.0, 0.0);"
-            xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" >
+    stylesheets="@../css/jfoenix-components.css,@../css/custom.css"
+    styleClass="shadowed"
+    xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" >
     <left>
         <ImageView id="artworkView"
             fitHeight="96.0" fitWidth="96.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">

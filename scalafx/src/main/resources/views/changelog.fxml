@@ -26,11 +26,11 @@
   ~ limitations under the License.
   -->
 
-<BorderPane prefHeight="446.0" prefWidth="696.0" stylesheets="@../css/jfoenix-components.css" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane prefHeight="446.0" prefWidth="696.0" stylesheets="@../css/jfoenix-components.css,@../css/custom.css" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <top>
-        <VBox spacing="8.0" style="-fx-background-radius: 4; -fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0.5, 0.0, 0.0);" BorderPane.alignment="CENTER">
-            <Label id="topLabel"/>
-            <Label id="bottomLabel"/>
+        <VBox spacing="8.0" styleClass="shadowed" BorderPane.alignment="CENTER">
+            <Label id="topLabel" />
+            <Label id="bottomLabel" />
             <padding>
                 <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
             </padding>
@@ -50,7 +50,7 @@
                        </StackPane>
                    </children>
                </JFXScrollPane>
-               <JFXSpinner id="searchingPane" radius="64.0" startingAngle="0.0" BorderPane.alignment="CENTER"/>
+               <JFXSpinner id="searchingPane" radius="64.0" startingAngle="0.0" BorderPane.alignment="CENTER" />
            </children>
        </StackPane>
    </center>
