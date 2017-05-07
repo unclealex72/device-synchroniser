@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.model
+package devsync.scalafx
 
-import devsync.json.{IsoDate, RelativePath}
+import devsync.json.{IsoDate, RelativePath, Tags}
+
+import scalafx.beans.property.ObjectProperty
 
 /**
   * A model for a [[devsync.json.ChangelogItem]]
+  *
   * @param at The time of the change.
   * @param maybeArtwork The album artwork if it could be loaded.
-  * @param relativePathOrAlbum Either the relative path of the change or the album.
+  * @param maybeTags The tags for a track on the album if they could be loaded.
+  * @param albumRelativePath The relative path of the album.
   **/
-case class ChangelogItemModel(at: IsoDate, maybeArtwork: Option[Array[Byte]], relativePathOrAlbum: Either[RelativePath, Album])
+case class ChangelogItemModel(
+                               at: IsoDate,
+                               maybeArtwork: Option[Array[Byte]],
+                               maybeTags: Option[Tags],
+                               albumRelativePath: RelativePath) {
 
-/**
-  * A model for an album.
-  * @param album The name of the album.
-  * @param artist The album's artist.
-  */
-case class Album(album: String, artist: String)
+  val progress: ObjectProperty[Option[(Long, Long)]] = new ObjectProperty[Option[(Long, Long)]](None, "")
+}

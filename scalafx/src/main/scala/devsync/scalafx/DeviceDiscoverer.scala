@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.discovery
+package devsync.scalafx
 
 import java.nio.file.Path
 

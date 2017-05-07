@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.util
+package devsync.scalafx
 
 import java.net.URL
 import java.nio.file.Path
@@ -22,7 +22,6 @@ import java.nio.file.Path
 import devsync.discovery.{ClingFlacManagerDiscovery, FlacManagerDiscovery}
 import devsync.json._
 import devsync.remote.{ChangesClient, ChangesClientImpl}
-import devsync.scalafx.discovery.{DeviceDiscoverer, DeviceDiscovererImpl}
 import devsync.sync._
 import org.fourthline.cling.DefaultUpnpServiceConfiguration
 

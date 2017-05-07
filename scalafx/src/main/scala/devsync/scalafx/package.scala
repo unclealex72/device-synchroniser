@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package devsync.scalafx
+package devsync
 
 /**
-  * Contains the [[devsync.scalafx.discovery.DeviceDiscoverer]] trait used to find a device in the filesystem.
+  * Contains various helper classes that did not fit in any other packages.
   */
-package object discovery {
+package object scalafx {
 
 }

@@ -28,6 +28,7 @@ import org.fourthline.cling.{UpnpServiceConfiguration, UpnpServiceImpl}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.Try
 
 /**
   * An instance of [[FlacManagerDiscovery]] that uses [[https://github.com/4thline/cling Cling]]
@@ -58,14 +59,27 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
       }
     })
     upnpService.getControlPoint.search(new UDADeviceTypeHeader(udaType))
-    val timeoutFuture: Future[Either[Exception, URL]] = Future {
-      Thread.sleep(timeout.toMillis)
-      throw new TimeoutException("Could not find a Flac Manager server within " + timeout)
+    val timeoutPromise: Promise[URL] = Promise()
+    val timeoutThread = new Thread {
+      override def run(): Unit = {
+        try {
+          Thread.sleep(timeout.toMillis)
+          timeoutPromise.failure(new TimeoutException("Could not find a Flac Manager server within " + timeout))
+        }
+        catch {
+          case _: InterruptedException => timeoutPromise.success(new URL("http://localhost"))
+        }
+      }
     }
-    val urlFuture: Future[Either[Exception, URL]] = urlPromise.future.map(Right(_))
-    val timingOutUrlFuture = Future.firstCompletedOf(Seq(timeoutFuture, urlFuture))
+    timeoutThread.start()
+    val timeoutFuture: Future[URL] = timeoutPromise.future
+    val urlFuture: Future[URL] = urlPromise.future
+    val timingOutUrlFuture = Future.firstCompletedOf(Seq(timeoutFuture, urlFuture)).map(Right(_))
     timingOutUrlFuture.map { value =>
-      Future { upnpService.shutdown() }
+      Future {
+        Try(upnpService.shutdown())
+        Try(timeoutThread.interrupt())
+      }
       value
     }.recover {
       case e: Exception => Left(e)

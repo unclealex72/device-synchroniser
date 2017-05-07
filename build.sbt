@@ -73,9 +73,11 @@ lazy val scalafx = (project in file("scalafx"))
     version := (version in ThisBuild).value,
     scalaVersion := Settings.versions.scala,
     fork in run := true,
+    autoCompilerPlugins := true,
     libraryDependencies ++= Seq(
       "org.scalafx" %% "scalafx" % Settings.versions.scalafx,
-      "ch.qos.logback" % "logback-classic" % "1.1.7"
+      "ch.qos.logback" % "logback-classic" % "1.1.7",
+      "com.jfoenix" % "jfoenix" % "1.3.0"
     ),
     maintainer in Debian := "alex.jones@unclealex.co.uk",
     mappings in Universal ++= Seq(

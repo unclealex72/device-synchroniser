@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.util
+package devsync.scalafx
 
 import java.io.{InputStream, OutputStream}
 import java.nio.file.{FileAlreadyExistsException, Files, Path}

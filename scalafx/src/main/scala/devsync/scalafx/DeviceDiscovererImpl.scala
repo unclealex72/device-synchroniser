@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.discovery
+package devsync.scalafx
 
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
@@ -22,7 +22,7 @@ import java.util.function.BiPredicate
 
 import cats.data.EitherT
 import devsync.json.DeviceDescriptor
-import devsync.scalafx.util.PathResource._
+import devsync.scalafx.PathResource._
 import devsync.sync.Device
 
 import scala.collection.JavaConversions._

@@ -16,9 +16,12 @@
 
 package devsync.scalafx
 
-/**
-  * Contains the views for this nearly MVP application.
-  */
-package object view {
+import scalafx.scene.Parent
 
-}
+/**
+  * A class used to hold a view and a controller for that view.
+  * @param view A ScalaFX view.
+  * @param controller A controller for the view.
+  * @tparam C The type of the controller.
+  */
+case class ViewAndController[C](view: Parent, controller: C)

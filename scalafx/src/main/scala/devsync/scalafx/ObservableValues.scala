@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package devsync.scalafx.util
+package devsync.scalafx
 
 import scalafx.beans.value.ObservableValue
 import scalafx.event.subscriptions.Subscription
@@ -37,8 +37,19 @@ object ObservableValues {
       * @param op The operation to run.
       * @return A subscription that will be run when the value changes.
       */
-    def onAltered(op: J => Unit): Subscription = ov.onChange { (_, oldValue, newValue) =>
-      if (newValue != null && newValue != oldValue) op(newValue)
+    def onAltered(op: J => Unit): Subscription = onAlteredOption { maybeValue =>
+      maybeValue.foreach(op)
+    }
+
+    /**
+      * A null safe version of onChange that responds to a value change and wraps it in an optional.
+      * @param op The operation to run.
+      * @return A subscription that will be run when the value changes.
+      */
+    def onAlteredOption(op: Option[J] => Unit): Subscription = ov.onChange { (_, oldValue, newValue) =>
+      val maybeOldValue = Option(oldValue)
+      val maybeNewValue = Option(newValue)
+      if (maybeNewValue != maybeOldValue) op(maybeNewValue)
     }
   }
 }
