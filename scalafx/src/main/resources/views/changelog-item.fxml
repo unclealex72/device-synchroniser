@@ -27,7 +27,7 @@
 
 <BorderPane
     stylesheets="@../css/jfoenix-components.css,@../css/custom.css"
-    styleClass="shadowed"
+    styleClass="info-box"
     xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" >
     <left>
         <ImageView id="artworkView"

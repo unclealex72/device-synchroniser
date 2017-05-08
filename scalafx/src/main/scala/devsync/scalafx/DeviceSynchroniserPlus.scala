@@ -61,69 +61,75 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
       executorService.shutdownNow()
     }
 
-  val discovery = for {
-    _ <- ui { controller.messages("Searching") }
-    synchronisingInformation <- loadSynchronisingInformation()
-    _ <- ui { controller.messages("Loading changes") }
-    changelogItems <- loadChangelogItems(synchronisingInformation)
-    changelogItemModels <- loadChangelogItemModels(synchronisingInformation, changelogItems)
-    _ <- ui {
-      if (changelogItemModels.isEmpty) {
-        controller.noChanges()
+    val discovery = for {
+      _ <- ui {
+        controller.messages("Searching")
       }
-      else {
-        controller.changes()
-        controller.changelogItems().addAll(changelogItemModels :_*)
-        val topMessage = synchronisingInformation.deviceDescriptor.maybeLastModified match {
-          case Some(at) => s"Last synchronised at ${at.format("HH:mm, EEE dd/MM/YYYY")}"
-          case None => "Never synchronised"
-        }
-        val bottomMessage = if (changelogItemModels.size == 1) {
-          "There is 1 change"
+      synchronisingInformation <- loadSynchronisingInformation()
+      _ <- ui {
+        controller.messages("Loading changes")
+      }
+      changelogItems <- loadChangelogItems(synchronisingInformation)
+      changelogItemModels <- loadChangelogItemModels(synchronisingInformation, changelogItems)
+      _ <- ui {
+        if (changelogItemModels.isEmpty) {
+          controller.noChanges()
         }
         else {
-          s"There are ${changelogItemModels.size} changes"
+          controller.changes()
+          controller.changelogItems().addAll(changelogItemModels: _*)
+          val topMessage = synchronisingInformation.deviceDescriptor.maybeLastModified match {
+            case Some(at) => s"Last synchronised at ${at.format("HH:mm, EEE dd/MM/YYYY")}"
+            case None => "Never synchronised"
+          }
+          val bottomMessage = if (changelogItemModels.size == 1) {
+            "There is 1 change"
+          }
+          else {
+            s"There are ${changelogItemModels.size} changes"
+          }
+          controller.messages(topMessage, bottomMessage)
+          controller.synchronise(synchronise(synchronisingInformation))
         }
-        controller.messages(topMessage, bottomMessage)
-        controller.synchronise(synchronise(synchronisingInformation))
+      }
+    } yield {}
+
+    discovery.leftMap { ex =>
+      ui {
+        controller.error(ex)
       }
     }
-  } yield {}
 
-  discovery.leftMap { ex =>
-    ui {
-      controller.error(ex)
-    }
-  }
+    def synchronise(
+                     synchronisingInformation: SynchronisingInformation): EitherT[Future, Exception, Unit] = {
+      val changelogItemModels = controller.changelogItems()
+      val modelsByAlbumRelativePath: Map[RelativePath, Option[ChangelogItemModel]] =
+        changelogItemModels.toSeq.groupBy(_.albumRelativePath).mapValues(_.headOption)
+      val deviceListener = new DeviceListener[Path] {
 
-  def synchronise(
-                   synchronisingInformation: SynchronisingInformation): EitherT[Future, Exception, Unit] = {
-    val changelogItemModels = controller.changelogItems()
-    val modelsByAlbumRelativePath: Map[RelativePath, Option[ChangelogItemModel]] =
-      changelogItemModels.toSeq.groupBy(_.albumRelativePath).mapValues(_.headOption)
-    val deviceListener = new DeviceListener[Path] {
+        var previousChangelogItemModel: Option[ChangelogItemModel] = None
 
-      var previousChangelogItemModel: Option[ChangelogItemModel] = None
+        override def synchronisingStarting(): Unit = ui {
+          controller.synchronising()
+          controller.messages("Synchronising")
+        }
 
-      override def synchronisingStarting(): Unit = ui {
-        controller.synchronising()
-        controller.messages("Synchronising")
-      }
-      override def addingMusic(
-                                addition: Addition,
-                                maybeTags: Option[Tags],
-                                maybeArtwork: Option[Array[Byte]],
-                                number: Int,
-                                total: Int): Unit = adding(addition, maybeTags, -1)
-      override def musicAdded(
-                               addition: Addition,
-                               maybeTags: Option[Tags],
-                               maybeArtwork: Option[Array[Byte]],
-                               number: Int,
-                               total: Int,
-                               resource: Path): Unit = adding(addition, maybeTags, 0)
+        override def addingMusic(
+                                  addition: Addition,
+                                  maybeTags: Option[Tags],
+                                  maybeArtwork: Option[Array[Byte]],
+                                  number: Int,
+                                  total: Int): Unit = adding(addition, maybeTags, -1)
 
-      def adding(addition: Addition, maybeTags: Option[Tags], offset: Int): Unit = ui {
+        override def musicAdded(
+                                 addition: Addition,
+                                 maybeTags: Option[Tags],
+                                 maybeArtwork: Option[Array[Byte]],
+                                 number: Int,
+                                 total: Int,
+                                 resource: Path): Unit = adding(addition, maybeTags, 0)
+
+        def adding(addition: Addition, maybeTags: Option[Tags], offset: Int): Unit = ui {
           for {
             albumRelativePath <- addition.relativePath.maybeParent
             tags <- maybeTags
@@ -144,84 +150,89 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
             }
             previousChangelogItemModel = currentChangelogItemModel
           }
-      }
+        }
 
-      def remove(removal: Removal): Unit = ui {
-        for {
-          albumRelativePath <- removal.relativePath.maybeParent
-          changelogItemModel <- modelsByAlbumRelativePath(albumRelativePath)
-        } yield {
-          dispose(changelogItemModel)
+        def remove(removal: Removal): Unit = ui {
+          for {
+            albumRelativePath <- removal.relativePath.maybeParent
+            changelogItemModel <- modelsByAlbumRelativePath(albumRelativePath)
+          } yield {
+            dispose(changelogItemModel)
+          }
+        }
+
+        def dispose(changelogItemModel: ChangelogItemModel): Unit = {
+          changelogItemModels.remove(changelogItemModel)
+        }
+
+        override def removingMusic(removal: Removal, number: Int, total: Int): Unit = remove(removal)
+
+        override def musicRemoved(removal: Removal, number: Int, total: Int): Unit = {}
+
+        override def synchronisingFailed(e: Exception, maybeIdx: Option[Int]): Unit = ui {
+          controller.error(e)
+        }
+
+        override def synchronisingFinished(count: Int): Unit = ui {
+          controller.finished(count)
         }
       }
-
-      def dispose(changelogItemModel: ChangelogItemModel): Unit = {
-        changelogItemModels.remove(changelogItemModel)
-      }
-
-      override def removingMusic(removal: Removal, number: Int, total: Int): Unit = remove(removal)
-      override def musicRemoved(removal: Removal, number: Int, total: Int): Unit = {}
-      override def synchronisingFailed(e: Exception, maybeIdx: Option[Int]): Unit = ui {
-        controller.error(e)
-      }
-      override def synchronisingFinished(count: Int): Unit = ui {
-        controller.finished(count)
-      }
+      EitherT(Services.device.synchronise(
+        synchronisingInformation.rootPath, synchronisingInformation.changesClient, deviceListener)).leftMap(_._1).map(_ => {})
     }
-    EitherT(Services.device.synchronise(
-      synchronisingInformation.rootPath, synchronisingInformation.changesClient, deviceListener)).leftMap(_._1).map(_ => {})
-  }
 
-  def ui(callback: => Unit): EitherT[Future, Exception, Unit] = EitherT.right {
-    Future.successful(Platform.runLater(callback))
-  }
-
-  def loadSynchronisingInformation(): EitherT[Future, Exception, SynchronisingInformation] = {
-    for {
-      url <- Services.flacManagerDiscovery.discover(Option(System.getenv("FLAC_DEV")).isDefined, 30.seconds)
-      deviceDescriptorAndPath <- Services.deviceDiscoverer.discover(Paths.get("/media", System.getProperty("user.name")), 2)
-    } yield {
-      SynchronisingInformation(url, deviceDescriptorAndPath._1, deviceDescriptorAndPath._2)
+    def ui(callback: => Unit): EitherT[Future, Exception, Unit] = EitherT.right {
+      Future.successful(Platform.runLater(callback))
     }
-  }
 
-  def loadChangelogItems(synchronisingInformation: SynchronisingInformation): EitherT[Future, Exception, Seq[ChangelogItem]] = {
-    for {
-      changelog <- EitherT {
-        Future {
-          val deviceDescriptor = synchronisingInformation.deviceDescriptor
-          synchronisingInformation.changesClient.
-            changelogSince(deviceDescriptor.user, deviceDescriptor.maybeLastModified)
-        }
-      }
-    } yield {
-      changelog.items
-    }
-  }
-
-  def loadChangelogItemModels(
-                               synchronisingInformation: SynchronisingInformation,
-                               changelogItems: Seq[ChangelogItem]): EitherT[Future, Exception, Seq[ChangelogItemModel]] = {
-    def generateModel(changelogItem: ChangelogItem): Future[ChangelogItemModel] = {
-      val changesClient = synchronisingInformation.changesClient
-      val eventualMaybeTags = Future(changesClient.tags(changelogItem).toOption)
-      val eventualMaybeArtwork = Future {
-        val out = new ByteArrayOutputStream()
-        changesClient.artwork(changelogItem, out).map(_ => out.toByteArray).toOption
-      }
+    def loadSynchronisingInformation(): EitherT[Future, Exception, SynchronisingInformation] = {
       for {
-        maybeTags <- eventualMaybeTags
-        maybeArtwork <- eventualMaybeArtwork
+        url <- Services.flacManagerDiscovery.discover(Option(System.getenv("FLAC_DEV")).isDefined, 30.seconds)
+        deviceDescriptorAndPath <- Services.deviceDiscoverer.discover(Paths.get("/media", System.getProperty("user.name")), 2)
       } yield {
-        ChangelogItemModel(changelogItem.at, maybeArtwork, maybeTags, changelogItem.parentRelativePath)
+        SynchronisingInformation(url, deviceDescriptorAndPath._1, deviceDescriptorAndPath._2)
       }
     }
-    val eventualChangelogItemModels: Future[Seq[ChangelogItemModel]] = Future.sequence(changelogItems.map(generateModel))
-    EitherT.right(eventualChangelogItemModels)
-  }
 
-  case class SynchronisingInformation(serverUrl: URL, deviceDescriptor: DeviceDescriptor, rootPath: Path) {
-    val changesClient: ChangesClient = Services.changesClient(serverUrl)
-  }
+    def loadChangelogItems(synchronisingInformation: SynchronisingInformation): EitherT[Future, Exception, Seq[ChangelogItem]] = {
+      for {
+        changelog <- EitherT {
+          Future {
+            val deviceDescriptor = synchronisingInformation.deviceDescriptor
+            synchronisingInformation.changesClient.
+              changelogSince(deviceDescriptor.user, deviceDescriptor.maybeLastModified)
+          }
+        }
+      } yield {
+        changelog.items
+      }
+    }
+
+    def loadChangelogItemModels(
+                                 synchronisingInformation: SynchronisingInformation,
+                                 changelogItems: Seq[ChangelogItem]): EitherT[Future, Exception, Seq[ChangelogItemModel]] = {
+      def generateModel(changelogItem: ChangelogItem): Future[ChangelogItemModel] = {
+        val changesClient = synchronisingInformation.changesClient
+        val eventualMaybeTags = Future(changesClient.tags(changelogItem).toOption)
+        val eventualMaybeArtwork = Future {
+          val out = new ByteArrayOutputStream()
+          changesClient.artwork(changelogItem, out).map(_ => out.toByteArray).toOption
+        }
+        for {
+          maybeTags <- eventualMaybeTags
+          maybeArtwork <- eventualMaybeArtwork
+        } yield {
+          ChangelogItemModel(changelogItem.at, maybeArtwork, maybeTags, changelogItem.parentRelativePath)
+        }
+      }
+
+      val eventualChangelogItemModels: Future[Seq[ChangelogItemModel]] = Future.sequence(changelogItems.map(generateModel))
+      EitherT.right(eventualChangelogItemModels)
+    }
+
+    case class SynchronisingInformation(serverUrl: URL, deviceDescriptor: DeviceDescriptor, rootPath: Path) {
+      val changesClient: ChangesClient = Services.changesClient(serverUrl)
+    }
+
   }
 }

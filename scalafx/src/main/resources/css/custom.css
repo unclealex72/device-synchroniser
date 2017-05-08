@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-.shadowed {
+.info-box {
     -fx-background-radius: 2;
     -fx-background-color: white;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 6, 0.25, 3.0, 3.0);

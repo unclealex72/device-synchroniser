@@ -76,7 +76,7 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
           }.
           show
       case Right(deviceDescriptorAndUri) =>
-        val dev = getIntent.getExtras.getBoolean("FLAC_DEV")
+        val dev = Option(getIntent.getExtras).exists(_.getBoolean("FLAC_DEV"))
         Services.flacManagerDiscovery.discover(dev, 30.seconds).value.onComplete {
           case Success(Right(url)) =>
             Ui(next(deviceDescriptorAndUri, url.toString)).run
