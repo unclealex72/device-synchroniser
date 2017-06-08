@@ -18,12 +18,15 @@ package devsync.json
 
 import java.net.URL
 
-import cats.syntax.either._
+import cats.syntax._
+import cats.implicits._
 import io.circe._
 import io.circe.Decoder.Result
 import io.circe.Json.{JObject, JString}
 import io.circe.parser.decode
 import io.circe.syntax._
+import org.threeten.bp.{Instant, ZoneId}
+import org.threeten.bp.format.DateTimeFormatter
 
 import scala.util.Try
 
@@ -42,16 +45,25 @@ class CirceCodec extends JsonCodec {
     */
   implicit val decodeRelativePath: Decoder[RelativePath] = Decoder.decodeString.emap(str => Right(RelativePath(str)))
 
-  /**
-    * A decoder that converts ISO8601 formatted strings to [[IsoDate]]
-    */
-  implicit val decodeIsoDate: Decoder[IsoDate] =
-    Decoder.decodeString.emap(str => IsoDate(str).leftMap(_.getMessage))
+  private val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.systemDefault())
 
   /**
-    * An encoder that converts [[IsoDate]] to ISO8601 formatted strings.
+    * A decoder that converts ISO8601 formatted strings to an [[Instant]]
     */
-  implicit val encodeIsoDate: Encoder[IsoDate] = Encoder.encodeString.contramap(_.fmt)
+  implicit val decodeInstant: Decoder[Instant] =
+    Decoder.decodeString.emap { str =>
+      try {
+        Right(isoFormatter.parse(str, Instant.FROM))
+      }
+      catch {
+        case t: Throwable => Left(t.getMessage)
+      }
+    }
+
+  /**
+    * An encoder that converts [[Instant]] to ISO8601 formatted strings.
+    */
+  implicit val encodeIsoDate: Encoder[Instant] = Encoder.encodeString.contramap(i => isoFormatter.format(i))
 
   /**
     * A decoder [[Links]].
@@ -149,7 +161,7 @@ class CirceCodec extends JsonCodec {
     // Encoding fails in Android so just build the object explicitly.
     val map: Map[String, Json] =
       Map("user" -> Json.fromString(deviceDescriptor.user)) ++
-        deviceDescriptor.maybeLastModified.map(isoDate => "lastModified" -> Json.fromString(isoDate.fmt)) ++
+        deviceDescriptor.maybeLastModified.map(instant => "lastModified" -> Json.fromString(isoFormatter.format(instant))) ++
         deviceDescriptor.maybeOffset.map(offset => "offset" -> Json.fromInt(offset))
     Printer.noSpaces.copy(dropNullKeys = true).pretty(map.asJson)
   }

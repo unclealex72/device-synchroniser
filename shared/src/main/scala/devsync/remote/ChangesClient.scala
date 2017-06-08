@@ -19,6 +19,7 @@ package devsync.remote
 import java.io.OutputStream
 
 import devsync.json._
+import org.threeten.bp.Instant
 
 /**
   * A trait that can be used to find [[Changes]] and [[Changelog]]s from a Flac Manager server.
@@ -31,7 +32,7 @@ trait ChangesClient {
     * @param maybeSince The earliest time for changes or none for all changes.
     * @return Either a [[Changes]] object from the server or an exception.
     */
-  def changesSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changes]
+  def changesSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changes]
 
   /**
     * Get the changelog for a user since a specific date..
@@ -39,7 +40,7 @@ trait ChangesClient {
     * @param maybeSince The earliest time for changes or none for all changes.
     * @return Either a [[Changes]] object from the server or an exception.
     */
-  def changelogSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changelog]
+  def changelogSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changelog]
 
   /**
     * Download the music for a track.

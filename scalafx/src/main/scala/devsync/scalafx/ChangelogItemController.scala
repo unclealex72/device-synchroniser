@@ -15,11 +15,12 @@
  */
 
 package devsync.scalafx
-
 import javafx.scene.{control => jfxc, image => jfxi, layout => jfxl}
 
 import devsync.scalafx.ObservableValues._
 import devsync.scalafx.View._
+import org.threeten.bp.ZoneId
+import org.threeten.bp.format.DateTimeFormatter
 
 import scalafx.Includes._
 import scalafx.scene.control.{Label, ProgressBar}
@@ -81,7 +82,9 @@ class ChangelogItemControllerImpl(private val changelogItemModel: ChangelogItemM
                                   private val progressBar: ProgressBar) extends ChangelogItemController {
 
   artworkView.image = Artwork(changelogItemModel.maybeArtwork)
-  updatedLabel.text = changelogItemModel.at.format("HH:mm, EEE dd/MM/YYYY")
+
+  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm, EEE dd/MM/yyyy").withZone(ZoneId.systemDefault())
+  updatedLabel.text = formatter.format(changelogItemModel.at)
 
   changelogItemModel.maybeTags match {
     case Some(tags) =>

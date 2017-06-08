@@ -24,6 +24,7 @@ import cats.instances.future._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json._
 import devsync.remote.ChangesClient
+import org.threeten.bp.Clock
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
@@ -31,13 +32,13 @@ import scala.io.Source
 /**
   * The default implementation of [[Device]]
   * @param jsonCodec The [[JsonCodec]] used to decode JSON objects from the Flac Manager server.
-  * @param isoClock The [[IsoClock]] used to get the current time.
+  * @param clock The [[Clock]] used to get the current time.
   * @tparam R The type of files a device contains. There will need to be typeclasses for both `Resource[R]` and
   *           `ResourceStreamProvider[R]`. This then allows the Android filesystem and the Linux filesystem to
   *           be treated as one.
   */
 class DeviceImpl[R](jsonCodec: JsonCodec,
-                    isoClock: IsoClock) extends Device[R] with StrictLogging {
+                    clock: Clock) extends Device[R] with StrictLogging {
 
   /**
     * The name the a device descriptor filename.
@@ -302,7 +303,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       // Finished - log whether synchronisation was successful or not and write the new device descriptor back to the
       val newDeviceDescriptor = accumulatedResult match {
         case Right(_) =>
-          deviceDescriptor.copy(maybeLastModified = Some(isoClock.now), maybeOffset = None)
+          deviceDescriptor.copy(maybeLastModified = Some(clock.instant()), maybeOffset = None)
         case Left(ewmi) =>
           // If the failed index is empty, keep the old index.
           logger.error(s"Synchronising failed at index ${ewmi.maybeIdx}", ewmi.e)

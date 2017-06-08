@@ -22,13 +22,14 @@ import java.net.URL
 import cats.syntax.either._
 import devsync.json._
 import devsync.remote.ChangesClient
+import org.threeten.bp.Instant
 
 /**
   * Created by alex on 06/04/17
   **/
-case class FauxChangesClient(now: IsoDate, changes: FauxChange*) extends ChangesClient {
+case class FauxChangesClient(now: Instant, changes: FauxChange*) extends ChangesClient {
 
-  var maybeSince: Option[IsoDate] = None
+  var maybeSince: Option[Instant] = None
 
   val successUrl = new URL("http://localhost/success")
   val failureUrl = new URL("http://localhost/failure")
@@ -59,7 +60,7 @@ case class FauxChangesClient(now: IsoDate, changes: FauxChange*) extends Changes
   /**
     * Get the changes for a user since a specific date.
     */
-  override def changesSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changes] = Right {
+  override def changesSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changes] = Right {
     this.maybeSince = maybeSince
     Changes(realChanges)
   }
@@ -67,7 +68,7 @@ case class FauxChangesClient(now: IsoDate, changes: FauxChange*) extends Changes
   /**
     * Count the number of changelog items for a user since a specific date
     */
-  override def changelogSince(user: String, maybeSince: Option[IsoDate]): Either[Exception, Changelog] =
+  override def changelogSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changelog] =
     Left(new Exception())
 
   override def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] = {

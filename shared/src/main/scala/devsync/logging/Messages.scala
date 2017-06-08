@@ -16,7 +16,8 @@
 
 package devsync.logging
 
-import devsync.json.IsoDate
+import org.threeten.bp.{Instant, ZoneId}
+import org.threeten.bp.format.DateTimeFormatter
 
 /**
   * Contains objects that contain messages that can be displayed to a user.
@@ -46,8 +47,11 @@ object Messages {
     * Messages used to show information about [[Changes]]
     */
   object Changes {
-    def maybeLastUpdated(maybeDate: Option[IsoDate]): String = maybeDate match {
-      case Some(date) => s"This device was last updated at ${date.format("HH:mm:ss, EEE d MMM, yyyy")}"
+    private val formatter: DateTimeFormatter =
+      DateTimeFormatter.ofPattern("HH:mm:ss, EEE d MMM, yyyy").withZone(ZoneId.systemDefault())
+
+    def maybeLastUpdated(maybeDate: Option[Instant]): String = maybeDate match {
+      case Some(date) => s"This device was last updated at ${formatter.format(date)}"
       case _ => "This device has never been updated"
     }
     def changes(count: Int): String = count match {

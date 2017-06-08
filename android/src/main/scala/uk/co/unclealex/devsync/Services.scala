@@ -20,12 +20,11 @@ import java.net.URL
 
 import android.support.v4.provider.DocumentFile
 import devsync.discovery.{ClingFlacManagerDiscovery, FlacManagerDiscovery}
-import devsync.json.{CirceCodec, IsoClock, JsonCodec, SystemIsoClock}
+import devsync.json.{CirceCodec, JsonCodec}
 import devsync.remote.{ChangesClient, ChangesClientImpl}
 import devsync.sync.{Device, DeviceImpl}
 import org.fourthline.cling.android.AndroidUpnpServiceConfiguration
-import uk.co.unclealex.devsync.Async._
-import uk.co.unclealex.devsync.DocumentFileResource._
+import org.threeten.bp.Clock
 /**
   * An object that holds singleton services
   **/
@@ -49,13 +48,13 @@ object Services {
   def changesClient(baseUrl: URL): ChangesClient = new ChangesClientImpl(jsonCodec, baseUrl)
 
   /**
-    * A singleton instance of [[IsoClock]]
+    * A singleton instance of [[Clock]]
     */
-  val isoClock: IsoClock = SystemIsoClock
+  val clock: Clock = Clock.systemDefaultZone()
 
   /**
     * A singleton instance of [[Device]]
     */
-  val device: Device[DocumentFile] = new DeviceImpl[DocumentFile](jsonCodec, isoClock)
+  val device: Device[DocumentFile] = new DeviceImpl[DocumentFile](jsonCodec, clock)
 
 }

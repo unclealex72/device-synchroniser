@@ -29,6 +29,8 @@ import devsync.json._
 import devsync.remote.ChangesClient
 import devsync.scalafx.PathResource._
 import devsync.sync.DeviceListener
+import org.threeten.bp.ZoneId
+import org.threeten.bp.format.DateTimeFormatter
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,6 +45,8 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
 
   private val executorService = Executors.newFixedThreadPool(2)
   implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(executorService)
+
+  private val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm, EEE dd/MM/yyyy").withZone(ZoneId.systemDefault())
 
   stage = new JFXApp.PrimaryStage() {
     title = "Device Synchroniser+"
@@ -79,7 +83,7 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
           controller.changes()
           controller.changelogItems().addAll(changelogItemModels: _*)
           val topMessage = synchronisingInformation.deviceDescriptor.maybeLastModified match {
-            case Some(at) => s"Last synchronised at ${at.format("HH:mm, EEE dd/MM/YYYY")}"
+            case Some(at) => s"Last synchronised at ${formatter.format(at)}"
             case None => "Never synchronised"
           }
           val bottomMessage = if (changelogItemModels.size == 1) {

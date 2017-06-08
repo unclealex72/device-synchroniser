@@ -24,6 +24,7 @@ import devsync.json._
 import devsync.remote.{ChangesClient, ChangesClientImpl}
 import devsync.sync._
 import org.fourthline.cling.DefaultUpnpServiceConfiguration
+import org.threeten.bp.Clock
 
 /**
   * Services used throughout device synchronisation.
@@ -36,9 +37,9 @@ object Services {
   val jsonCodec: JsonCodec = new CirceCodec
 
   /**
-    * The default [[IsoClock]] to use.
+    * The default [[Clock]] to use.
     */
-  val isoClock: IsoClock = SystemIsoClock
+  val clock: Clock = Clock.systemDefaultZone()
 
   /**
     * The default [[FlacManagerDiscovery]] to use.
@@ -48,7 +49,7 @@ object Services {
   /**
     * The default [[Device]] to use.
     */
-  val device: Device[Path] = new DeviceImpl[Path](jsonCodec, isoClock)
+  val device: Device[Path] = new DeviceImpl[Path](jsonCodec, clock)
 
   /**
     * The default [[DeviceDiscoverer]] to use.

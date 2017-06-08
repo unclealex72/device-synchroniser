@@ -16,7 +16,8 @@
 
 package devsync.scalafx
 
-import devsync.json.{IsoDate, RelativePath, Tags}
+import devsync.json.{RelativePath, Tags}
+import org.threeten.bp.Instant
 
 import scalafx.beans.property.ObjectProperty
 
@@ -29,7 +30,7 @@ import scalafx.beans.property.ObjectProperty
   * @param albumRelativePath The relative path of the album.
   **/
 case class ChangelogItemModel(
-                               at: IsoDate,
+                               at: Instant,
                                maybeArtwork: Option[Array[Byte]],
                                maybeTags: Option[Tags],
                                albumRelativePath: RelativePath) {

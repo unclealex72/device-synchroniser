@@ -21,7 +21,8 @@ lazy val shared: Project = (project in file("shared"))
       "ch.qos.logback" % "logback-classic" % Settings.versions.logback % Test,
       "org.typelevel" %% "cats" % Settings.versions.cats,
       "org.specs2" %% "specs2-core" % Settings.versions.specs2 % Test,
-      "org.specs2" %% "specs2-mock" % Settings.versions.specs2 % Test
+      "org.specs2" %% "specs2-mock" % Settings.versions.specs2 % Test,
+      "org.threeten" % "threetenbp" % "1.3.4"
     ),
 	  exportJars := true
   )
@@ -77,7 +78,8 @@ lazy val scalafx = (project in file("scalafx"))
     libraryDependencies ++= Seq(
       "org.scalafx" %% "scalafx" % Settings.versions.scalafx,
       "ch.qos.logback" % "logback-classic" % "1.1.7",
-      "com.jfoenix" % "jfoenix" % "1.3.0"
+      "com.jfoenix" % "jfoenix" % "1.3.0",
+      "org.threeten" % "threetenbp" % "1.3.4"
     ),
     maintainer in Debian := "alex.jones@unclealex.co.uk",
     mappings in Universal ++= Seq(

@@ -18,11 +18,12 @@ package devsync.json
 
 import java.net.URL
 
+import cats.syntax.either._
 import org.specs2.mutable.Specification
+import org.threeten.bp.format.DateTimeFormatter
+import org.threeten.bp.{Instant, ZoneId}
 
 import scala.io.Source
-import scala.util.{Success, Try}
-import cats.syntax.either._
 
 /**
   * Created by alex on 20/03/17
@@ -36,7 +37,7 @@ class CirceCodecSpec extends Specification {
       "added.json".deserialiseUsing(_.parseChange) must be_==(
         Addition(
           relativePath = "Q/Queen/Flash Gordon/01 Flashs Theme.mp3",
-          at = "2017-03-13T22:05:16.000Z",
+          at = "2017-03-13T22:05:16Z",
           links = Links(
             music = "http://localhost:9000/music/alex/Q/Queen/Flash Gordon/01 Flashs Theme.mp3",
             tags = "http://localhost:9000/tags/alex/Q/Queen/Flash Gordon/01 Flashs Theme.mp3",
@@ -52,7 +53,7 @@ class CirceCodecSpec extends Specification {
       "removed.json".deserialiseUsing(_.parseChange) must be_==(
         Removal(
           relativePath = "N/Napalm Death/Scum/12 You Suffer.mp3",
-          at = "2017-03-22T17:18:55.000Z"
+          at = "2017-03-22T17:18:55Z"
         )
       )
     }
@@ -94,7 +95,7 @@ class CirceCodecSpec extends Specification {
         Changelog(Seq(
             ChangelogItem(
               parentRelativePath = "Q/Queen/Flash Gordon",
-              at = "2017-03-13T22:05:06.000Z",
+              at = "2017-03-13T22:05:06Z",
               relativePath = "Q/Queen/Flash Gordon/01 Flashs Theme.mp3",
               links = Links(
                 music = "http://localhost:9000/music/alex/Q/Queen/Flash+Gordon/01+Flashs+Theme.mp3",
@@ -104,7 +105,7 @@ class CirceCodecSpec extends Specification {
             ),
             ChangelogItem(
               parentRelativePath = "N/Napalm Death/Scum",
-              at = "2017-03-13T22:05:01.000Z",
+              at = "2017-03-13T22:05:01Z",
               relativePath = "N/Napalm Death/Scum/12 You Suffer.mp3",
               links = Links(
                 music = "http://localhost:9000/music/alex/N/Napalm+Death/Scum/12+You+Suffer.mp3",
@@ -126,7 +127,7 @@ class CirceCodecSpec extends Specification {
     "Writing a device descriptor with all fields" should {
       "product a json object with all fields populated" in {
         codec.writeDeviceDescriptor(
-          DeviceDescriptor("alex", Some("2017-03-13T22:05:01.000Z"), Some(5))) must be_==("""{"user":"alex","lastModified":"2017-03-13T22:05:01.000Z","offset":5}""")
+          DeviceDescriptor("alex", Some("2017-03-13T22:05:01Z"), Some(5))) must be_==("""{"user":"alex","lastModified":"2017-03-13T22:05:01Z","offset":5}""")
       }
     }
   }
@@ -143,5 +144,7 @@ class CirceCodecSpec extends Specification {
 
   implicit def stringToUrl(str: String): URL = new URL(str)
   implicit def stringToRelativePath(str: String): RelativePath = RelativePath(str)
-  implicit def stringToIsoDate(str: String): IsoDate = IsoDate(str).right.get
+  implicit def stringToIsoDate(str: String): Instant = {
+    DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.systemDefault()).parse(str, Instant.FROM)
+  }
 }

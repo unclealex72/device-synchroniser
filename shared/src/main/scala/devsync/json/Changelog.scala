@@ -16,8 +16,11 @@
 
 package devsync.json
 
+import org.threeten.bp.Instant
+
 /**
   * A changelog is a list of changes teCreated by alex on 19/03/17hat will be applied to a device at an album level.
+ *
   * @param items The list of changes.
   **/
 case class Changelog(items: Seq[ChangelogItem])
@@ -30,5 +33,5 @@ case class Changelog(items: Seq[ChangelogItem])
   * @param links A set of [[Links]] to read information about the album.
   */
 case class ChangelogItem(parentRelativePath: RelativePath,
-                         at: IsoDate,
+                         at: Instant,
                          relativePath: RelativePath, links: Links) extends HasLinks with HasRelativePath

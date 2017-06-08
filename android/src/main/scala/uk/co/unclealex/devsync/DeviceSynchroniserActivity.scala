@@ -36,6 +36,8 @@ import devsync.remote.ChangesClient
 import macroid.FullDsl.{text, _}
 import macroid._
 import macroid.extras.ImageViewTweaks._
+import org.threeten.bp.{Instant, ZoneId}
+import org.threeten.bp.format.DateTimeFormatter
 import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
@@ -172,11 +174,12 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     }
 
     override def onBindViewHolder(vh: AlbumViewHolder, idx: Int): Unit = {
+      val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").withZone(ZoneId.systemDefault())
       if (changelog.items.isDefinedAt(idx)) {
         val changelogItem = changelog.items(idx)
         loadArtwork(vh, changelogItem)
         loadTags(vh, changelogItem)
-        Ui.run(vh.timeText <~ text(changelogItem.at.format("dd/MM/yyyy HH:mm:ss")))
+        Ui.run(vh.timeText <~ text(formatter.format(changelogItem.at)))
       }
     }
 
@@ -197,7 +200,7 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
   def populateChangelog(
                          changesClient: ChangesClient,
                          user: String,
-                         maybeLastModified: Option[IsoDate]): Future[Either[Exception, Changelog]] = Future {
+                         maybeLastModified: Option[Instant]): Future[Either[Exception, Changelog]] = Future {
     changesClient.changelogSince(user, maybeLastModified)
   }
 
