@@ -80,7 +80,7 @@ class DeviceImplSpec extends Specification {
         "/",
         "/Q/", "/Q/Queen/", "/Q/Queen/Flash Gordon/", "/Q/Queen/Flash Gordon/1 Flash's Theme.mp3 audio/mp3 Some(Flash!)",
         "/S/", "/S/Slayer/", "/S/Slayer/Reign in Blood/", "/S/Slayer/Reign in Blood/5 Jesus Saves.mp3 audio/mp3 Some(Phew)",
-        "/device.json application/json Some({\"user\":\"alex\",\"lastModified\":\"2017-03-13T22:05:01Z\"})"
+        """/device.json application/json Some({"user":"alex","extension":"mp3","lastModified":"2017-03-13T22:05:01Z"})"""
       ))
     }
     "log both additions and removals" in {
@@ -119,7 +119,7 @@ class DeviceImplSpec extends Specification {
         "/N/", "/N/Nirvana/", "/N/Nirvana/Nevermind/", "/N/Nirvana/Nevermind/3 Lithium.mp3 audio/mp3 Some(Grunge)",
         "/Q/", "/Q/Queen/", "/Q/Queen/Flash Gordon/", "/Q/Queen/Flash Gordon/1 Flash's Theme.mp3 audio/mp3 Some(Flash!)",
         "/S/", "/S/Slayer/", "/S/Slayer/Reign in Blood/", "/S/Slayer/Reign in Blood/5 Jesus Saves.mp3 audio/mp3 Some(Phew)",
-        "/device.json application/json Some({\"user\":\"alex\",\"lastModified\":\"2017-03-13T22:05:01Z\"})"
+        """/device.json application/json Some({"user":"alex","extension":"mp3","lastModified":"2017-03-13T22:05:01Z"})"""
       ))
     }
     "log both additions and removals " in {
@@ -157,7 +157,7 @@ class DeviceImplSpec extends Specification {
         "/N/", "/N/Nirvana/", "/N/Nirvana/Nevermind/", "/N/Nirvana/Nevermind/3 Lithium.mp3 audio/mp3 Some(Grunge)",
         "/Q/", "/Q/Queen/", "/Q/Queen/Flash Gordon/", "/Q/Queen/Flash Gordon/1 Flash's Theme.mp3 audio/mp3 Some(Flash!)",
         "/S/", "/S/Slayer/", "/S/Slayer/Reign in Blood/", "/S/Slayer/Reign in Blood/5 Jesus Saves.mp3 audio/mp3 Some()",
-        "/device.json application/json Some({\"user\":\"alex\",\"offset\":1})"
+        """/device.json application/json Some({"user":"alex","extension":"mp3","offset":1})"""
       ))
     }
     "log up to the failure" in {
@@ -201,7 +201,7 @@ class DeviceImplSpec extends Specification {
           "/N/Nirvana/", "/N/Nirvana/Nevermind/", "/N/Nirvana/Nevermind/3 Lithium.mp3 audio/mp3 Some(Grunge)",
         "/Q/", "/Q/Queen/", "/Q/Queen/Flash Gordon/", "/Q/Queen/Flash Gordon/1 Flash's Theme.mp3 audio/mp3 Some(Flash)",
         "/S/", "/S/Slayer/", "/S/Slayer/Reign in Blood/", "/S/Slayer/Reign in Blood/5 Jesus Saves.mp3 audio/mp3 Some(Phew)",
-        "/device.json application/json Some({\"user\":\"alex\",\"lastModified\":\"2017-03-13T22:05:01Z\"})"))
+        """/device.json application/json Some({"user":"alex","extension":"mp3","lastModified":"2017-03-13T22:05:01Z"})"""))
     }
     "not log adding anything before the failure" in {
       listener.log must be_==(Seq(
