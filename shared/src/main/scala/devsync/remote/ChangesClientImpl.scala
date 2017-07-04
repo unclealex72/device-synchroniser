@@ -43,19 +43,19 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
   /**
     * @inheritdoc
     */
-  override def changesSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changes] = {
+  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changes] = {
     val since = orDatum(maybeSince)
     logger.info(s"Looking for changes since $since")
-    readUrl(_.parseChanges, "changes" / user / since).error(s"Could not download changes since $since")
+    readUrl(_.parseChanges, "changes" / user / extension.extension / since).error(s"Could not download changes since $since")
   }
 
   /**
     * @inheritdoc
     */
-  override def changelogSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changelog] = {
+  override def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changelog] = {
     val since = orDatum(maybeSince)
     logger.info(s"Loading the changelog since $since")
-    readUrl(_.parseChangelog, "changelog" / user / since).error(s"Could not download the changelog since $since")
+    readUrl(_.parseChangelog, "changelog" / user / extension.extension / since).error(s"Could not download the changelog since $since")
   }
 
   /**

@@ -92,7 +92,8 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
           }
           def updateChangelog(): Future[_] = {
             val changesClient = Services.changesClient(new URL(serverUrl))
-            populateChangelog(changesClient, deviceDescriptor.user, deviceDescriptor.maybeLastModified).mapUi {
+            populateChangelog(
+              changesClient, deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified).mapUi {
               case Right(changelog) =>
                 Transformer {
                   case ChangesContainerView(rv) =>
@@ -200,8 +201,9 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
   def populateChangelog(
                          changesClient: ChangesClient,
                          user: String,
+                         extension: Extension,
                          maybeLastModified: Option[Instant]): Future[Either[Exception, Changelog]] = Future {
-    changesClient.changelogSince(user, maybeLastModified)
+    changesClient.changelogSince(user, extension, maybeLastModified)
   }
 
   /**

@@ -60,7 +60,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
   /**
     * Get the changes for a user since a specific date.
     */
-  override def changesSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changes] = Right {
+  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changes] = Right {
     this.maybeSince = maybeSince
     Changes(realChanges)
   }
@@ -68,7 +68,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
   /**
     * Count the number of changelog items for a user since a specific date
     */
-  override def changelogSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changelog] =
+  override def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changelog] =
     Left(new Exception())
 
   override def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] = {

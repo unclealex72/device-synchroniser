@@ -60,6 +60,10 @@ class CirceCodec extends JsonCodec {
       }
     }
 
+  implicit val decodeExtension: Decoder[Extension] = Decoder.decodeString.emap { str =>
+    Extension.values.find(_.extension == str).toRight(s"$str is not a valid extension.")
+  }
+
   /**
     * An encoder that converts [[Instant]] to ISO8601 formatted strings.
     */
@@ -117,8 +121,9 @@ class CirceCodec extends JsonCodec {
   /**
     * A decoder for [[DeviceDescriptor]]s.
     */
-  implicit val decodeDeviceDescriptor: Decoder[DeviceDescriptor] =
-    Decoder.forProduct3("user", "lastModified", "offset")(DeviceDescriptor.apply)
+  implicit val decodeDeviceDescriptor: Decoder[DeviceDescriptor] = {
+    Decoder.forProduct4("user", "extension", "lastModified", "offset")(DeviceDescriptor.optionalExtension)
+  }
 
   /**
     * @inheritdoc
@@ -160,7 +165,7 @@ class CirceCodec extends JsonCodec {
   override def writeDeviceDescriptor(deviceDescriptor: DeviceDescriptor): String = {
     // Encoding fails in Android so just build the object explicitly.
     val map: Map[String, Json] =
-      Map("user" -> Json.fromString(deviceDescriptor.user)) ++
+      Map("user" -> Json.fromString(deviceDescriptor.user), "extension" -> Json.fromString(deviceDescriptor.extension.extension)) ++
         deviceDescriptor.maybeLastModified.map(instant => "lastModified" -> Json.fromString(isoFormatter.format(instant))) ++
         deviceDescriptor.maybeOffset.map(offset => "offset" -> Json.fromInt(offset))
     Printer.noSpaces.copy(dropNullKeys = true).pretty(map.asJson)

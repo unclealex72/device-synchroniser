@@ -19,6 +19,7 @@ package devsync.json
 import java.net.URL
 
 import cats.syntax.either._
+import devsync.json.Extension.{M4A, MP3}
 import org.specs2.mutable.Specification
 import org.threeten.bp.format.DateTimeFormatter
 import org.threeten.bp.{Instant, ZoneId}
@@ -118,16 +119,17 @@ class CirceCodecSpec extends Specification {
       )
     }
 
-    "Writing a device descriptor with just a user" should {
+    "Writing a device descriptor with just a user and extension" should {
       "product a json object with just the user field" in {
-        codec.writeDeviceDescriptor(DeviceDescriptor("alex", None, None)) must be_==("""{"user":"alex"}""")
+        codec.writeDeviceDescriptor(DeviceDescriptor("alex", M4A, None, None)) must be_==("""{"user":"alex","extension":"m4a"}""")
       }
     }
 
     "Writing a device descriptor with all fields" should {
       "product a json object with all fields populated" in {
         codec.writeDeviceDescriptor(
-          DeviceDescriptor("alex", Some("2017-03-13T22:05:01Z"), Some(5))) must be_==("""{"user":"alex","lastModified":"2017-03-13T22:05:01Z","offset":5}""")
+          DeviceDescriptor("alex", MP3, Some("2017-03-13T22:05:01Z"), Some(5))) must be_==(
+          """{"user":"alex","extension":"mp3","lastModified":"2017-03-13T22:05:01Z","offset":5}""")
       }
     }
   }

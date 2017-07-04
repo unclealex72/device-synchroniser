@@ -133,7 +133,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       */
     def loadChanges: EitherT[Future, EWMI, Changes] = EitherT {
       Future {
-        changesClient.changesSince(deviceDescriptor.user, deviceDescriptor.maybeLastModified).leftMap {
+        changesClient.changesSince(deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified).leftMap {
           e => ExceptionWithMaybeIndex(e)
         }
       }

@@ -19,6 +19,7 @@ lazy val shared: Project = (project in file("shared"))
       "org.fourthline.cling" % "cling-core" % Settings.versions.clingCore,
       "com.typesafe.scala-logging" %% "scala-logging" % Settings.versions.scalaLogging,
       "ch.qos.logback" % "logback-classic" % Settings.versions.logback % Test,
+      "com.beachape" %% "enumeratum" % "1.5.12",
       "org.typelevel" %% "cats" % Settings.versions.cats,
       "org.specs2" %% "specs2-core" % Settings.versions.specs2 % Test,
       "org.specs2" %% "specs2-mock" % Settings.versions.specs2 % Test,

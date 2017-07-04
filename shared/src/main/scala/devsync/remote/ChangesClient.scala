@@ -29,18 +29,20 @@ trait ChangesClient {
   /**
     * Get the changes for a user since a specific date.
     * @param user The user to search for.
+    * @param extension The type of files on this device.
     * @param maybeSince The earliest time for changes or none for all changes.
     * @return Either a [[Changes]] object from the server or an exception.
     */
-  def changesSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changes]
+  def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changes]
 
   /**
     * Get the changelog for a user since a specific date..
     * @param user The user to search for.
+    * @param extension The type of files on this device.
     * @param maybeSince The earliest time for changes or none for all changes.
     * @return Either a [[Changes]] object from the server or an exception.
     */
-  def changelogSince(user: String, maybeSince: Option[Instant]): Either[Exception, Changelog]
+  def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changelog]
 
   /**
     * Download the music for a track.

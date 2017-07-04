@@ -204,7 +204,7 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
           Future {
             val deviceDescriptor = synchronisingInformation.deviceDescriptor
             synchronisingInformation.changesClient.
-              changelogSince(deviceDescriptor.user, deviceDescriptor.maybeLastModified)
+              changelogSince(deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified)
           }
         }
       } yield {
