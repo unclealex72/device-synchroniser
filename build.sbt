@@ -4,10 +4,9 @@ import sbt._
 import sbt.Project.projectToRef
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
-resolvers += "4thline resolver" at "http://4thline.org/m2"
-
 lazy val shared: Project = (project in file("shared"))
   .settings(
+    resolvers += "4thline resolver" at "http://4thline.org/m2",
     organization := Settings.organisation,
     name := "device-synchroniser-shared",
     version := (version in ThisBuild).value,
