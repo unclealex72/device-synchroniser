@@ -31,11 +31,18 @@ import uk.co.unclealex.devsync.IntentHelper._
 
 import scala.concurrent.duration._
 import scala.util.Success
+import android.Manifest.permission
+import android.content.pm.PackageManager
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
+
 /**
   * An activity that shows a progress spinner whilst searching for a Flac Manager server and
   * device descriptor file.
   */
 class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with PassthroughLogging {
+
+  private val PERMISSIONS_REQUEST: Int = 0
 
   /**
     * @inheritdoc
@@ -43,11 +50,34 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.device_discovery_activity)
-    val prefs = getPreferences(Context.MODE_PRIVATE)
-    val maybeDeviceUri = Option(prefs.getString(Constants.Prefs.resourceUri, null))
-    processDeviceDescriptor(maybeDeviceUri)
+    checkPermissions()
   }
 
+  override def onRequestPermissionsResult(requestCode: Int, permissions: Array[String], grantResults: Array[Int]): Unit = {
+    checkPermissions()
+  }
+
+  def checkPermissions(): Unit = {
+    val requiredPermissions = Seq(
+      permission.READ_EXTERNAL_STORAGE,
+      permission.WRITE_EXTERNAL_STORAGE,
+      permission.INTERNET,
+      permission.ACCESS_WIFI_STATE,
+      permission.CHANGE_WIFI_MULTICAST_STATE,
+      permission.ACCESS_NETWORK_STATE,
+      permission.WAKE_LOCK)
+    val missingPermissions = requiredPermissions.filter { pm =>
+      ContextCompat.checkSelfPermission(this, pm) != PackageManager.PERMISSION_GRANTED
+    }
+    if (missingPermissions.isEmpty) {
+      val prefs = getPreferences(Context.MODE_PRIVATE)
+      val maybeDeviceUri = Option(prefs.getString(Constants.Prefs.resourceUri, null))
+      processDeviceDescriptor(maybeDeviceUri)
+    }
+    else {
+      ActivityCompat.requestPermissions(this, missingPermissions.toArray[String], PERMISSIONS_REQUEST)
+    }
+  }
   /**
     * Look for a device descriptor file and, if found, look for the Flac Manager server.
     * @param maybeDeviceUri The device URI from preferences or none if the preferences did not contain a device URI.
