@@ -20,6 +20,7 @@ import java.util.concurrent.TimeoutException
 
 import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
+import devsync.monads.FutureEither
 import org.fourthline.cling.model.message.header.UDADeviceTypeHeader
 import org.fourthline.cling.model.meta.RemoteDevice
 import org.fourthline.cling.model.types.{UDADeviceType, UDAServiceId}
@@ -39,7 +40,7 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
   /**
     * @inheritdoc
     */
-  override def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): EitherT[Future, Exception, URL] = EitherT {
+  override def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): FutureEither[Exception, URL] = EitherT {
 
     val urlPromise: Promise[URL]  = Promise()
     val upnpService = new UpnpServiceImpl(upnpServiceConfiguration)

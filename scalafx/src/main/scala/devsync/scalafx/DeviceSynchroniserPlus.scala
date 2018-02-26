@@ -26,6 +26,7 @@ import cats.instances.future._
 import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json._
+import devsync.monads.FutureEither
 import devsync.remote.ChangesClient
 import devsync.scalafx.PathResource._
 import devsync.sync.{DeviceListener, Progress}
@@ -105,7 +106,7 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
     }
 
     def synchronise(
-                     synchronisingInformation: SynchronisingInformation): EitherT[Future, Exception, Unit] = {
+                     synchronisingInformation: SynchronisingInformation): FutureEither[Exception, Unit] = {
       val changelogItemModels = controller.changelogItems()
       val modelsByAlbumRelativePath: Map[RelativePath, Option[ChangelogItemModel]] =
         changelogItemModels.toSeq.groupBy(_.albumRelativePath).mapValues(_.headOption)
@@ -183,11 +184,11 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
         synchronisingInformation.rootPath, synchronisingInformation.changesClient, deviceListener)).leftMap(_._1).map(_ => {})
     }
 
-    def ui(callback: => Unit): EitherT[Future, Exception, Unit] = EitherT.right {
+    def ui(callback: => Unit): FutureEither[Exception, Unit] = EitherT.right {
       Future.successful(Platform.runLater(callback))
     }
 
-    def loadSynchronisingInformation(): EitherT[Future, Exception, SynchronisingInformation] = {
+    def loadSynchronisingInformation(): FutureEither[Exception, SynchronisingInformation] = {
       for {
         url <- Services.flacManagerDiscovery.discover(Option(System.getenv("FLAC_DEV")).isDefined, 30.seconds)
         deviceDescriptorAndPath <- Services.deviceDiscoverer.discover(Paths.get("/media", System.getProperty("user.name")), 2)
@@ -196,7 +197,7 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
       }
     }
 
-    def loadChangelogItems(synchronisingInformation: SynchronisingInformation): EitherT[Future, Exception, Seq[ChangelogItem]] = {
+    def loadChangelogItems(synchronisingInformation: SynchronisingInformation): FutureEither[Exception, Seq[ChangelogItem]] = {
       for {
         changelog <- EitherT {
           Future {
@@ -212,7 +213,7 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
 
     def loadChangelogItemModels(
                                  synchronisingInformation: SynchronisingInformation,
-                                 changelogItems: Seq[ChangelogItem]): EitherT[Future, Exception, Seq[ChangelogItemModel]] = {
+                                 changelogItems: Seq[ChangelogItem]): FutureEither[Exception, Seq[ChangelogItemModel]] = {
       def generateModel(changelogItem: ChangelogItem): Future[ChangelogItemModel] = {
         val changesClient = synchronisingInformation.changesClient
         val eventualMaybeTags = Future(changesClient.tags(changelogItem).toOption)

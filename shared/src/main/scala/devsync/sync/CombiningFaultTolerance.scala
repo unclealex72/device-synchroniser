@@ -15,9 +15,9 @@
  */
 
 package devsync.sync
-import cats.data.EitherT
+import devsync.monads.FutureEither
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 /**
   * Combine two fault tolerance patterns
@@ -31,6 +31,6 @@ class CombiningFaultTolerance(outer: FaultTolerance, inner: FaultTolerance) exte
     * @tparam R
     * @return The result of running the code.
     */
-  override def tolerate[R](block: => EitherT[Future, Exception, R])(implicit ec: ExecutionContext): EitherT[Future, Exception, R] =
+  override def tolerate[R](block: => FutureEither[Exception, R])(implicit ec: ExecutionContext): FutureEither[Exception, R] =
     outer.tolerate(inner.tolerate(block))
 }

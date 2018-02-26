@@ -16,9 +16,9 @@
 
 package devsync.sync
 
-import cats.data.EitherT
+import devsync.monads.FutureEither
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 /**
   * A trait used to wrap network code to make it more fault tolerant.
@@ -32,5 +32,5 @@ trait FaultTolerance {
     * @tparam R
     * @return The result of running the code.
     */
-  def tolerate[R](block: => EitherT[Future, Exception, R])(implicit ec: ExecutionContext): EitherT[Future, Exception, R]
+  def tolerate[R](block: => FutureEither[Exception, R])(implicit ec: ExecutionContext): FutureEither[Exception, R]
 }

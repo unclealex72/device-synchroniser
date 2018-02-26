@@ -18,10 +18,10 @@ package devsync.discovery
 
 import java.net.URL
 
-import cats.data.EitherT
+import devsync.monads.FutureEither
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * A trait to allow the discovery of a Flac Manager server on a local network.
@@ -35,5 +35,5 @@ trait FlacManagerDiscovery {
     * @param ec An execution context used for running future events.
     * @return A future eventually containing the root url or an error.
     */
-  def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): EitherT[Future, Exception, URL]
+  def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): FutureEither[Exception, URL]
 }

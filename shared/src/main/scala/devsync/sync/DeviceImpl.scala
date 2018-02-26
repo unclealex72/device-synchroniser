@@ -19,10 +19,11 @@ package devsync.sync
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import cats.data.EitherT
-import cats.syntax.either._
 import cats.instances.future._
+import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json._
+import devsync.monads.FutureEither
 import devsync.remote.ChangesClient
 import org.threeten.bp.Clock
 
@@ -132,7 +133,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * Load the [[Changes]] from a Flac Manager server.
       * @return Eventually either a [[Changes]] object or a failure.
       */
-    def loadChanges: EitherT[Future, EWMI, Changes] = EitherT {
+    def loadChanges: FutureEither[EWMI, Changes] = EitherT {
       Future {
         changesClient.changesSince(deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified).leftMap {
           e => ExceptionWithMaybeIndex(e)
@@ -145,8 +146,8 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param changes The [[Changes]] object downloaded from the Flac Manager server.
       * @return Eventually either the number of changes or a failure.
       */
-    def processChanges(changes: Changes): EitherT[Future, EWMI, Int] = {
-      val empty: EitherT[Future, EWMI, Unit] = EitherT.right[Future, EWMI, Unit](Future.successful({}))
+    def processChanges(changes: Changes): FutureEither[EWMI, Int] = {
+      val empty: FutureEither[EWMI, Unit] = EitherT.right[Future, EWMI, Unit](Future.successful({}))
       val total = changes.changes.size
       val richChangeWithProgressBuilder = RichChangeWithProgress(total)
       val previouslyUntriedChanges = changes.changes.zipWithIndex.drop(deviceDescriptor.maybeOffset.getOrElse(0))
@@ -230,7 +231,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param richChangeWithProgress The change to process.
       * @return Eventually [[Unit]] or an exception.
       */
-    def processRichChangeWithProgress(richChangeWithProgress: RichChangeWithProgress): EitherT[Future, Exception, Unit] = {
+    def processRichChangeWithProgress(richChangeWithProgress: RichChangeWithProgress): FutureEither[Exception, Unit] = {
       // When adding and removing music we need to make sure that the addingMusic and removingMusic events are
       // always called before musicAdded and musicRemoved.
       richChangeWithProgress.richChange match {
@@ -260,7 +261,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param addition The track to add.
       * @return Eventually either the resource that was newly created or an exception.
       */
-    def addMusic(addition: Addition): EitherT[Future, Exception, R] = {
+    def addMusic(addition: Addition): FutureEither[Exception, R] = {
       addition.relativePath match {
         case rp @ DirectoryAndFile(dir, name) =>
           logger.info(s"Adding $rp")
@@ -285,7 +286,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param removal The track to remove.
       * @return Eventuall either [[Unit]] or an exception.
       */
-    def removeMusic(removal: Removal): EitherT[Future, Exception, Unit] = {
+    def removeMusic(removal: Removal): FutureEither[Exception, Unit] = {
       val path = removal.relativePath
       logger.info(s"Removing $path")
       EitherT.right[Future, Exception, Unit] {

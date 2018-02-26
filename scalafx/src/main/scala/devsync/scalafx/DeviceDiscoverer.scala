@@ -18,10 +18,10 @@ package devsync.scalafx
 
 import java.nio.file.Path
 
-import cats.data.EitherT
 import devsync.json.DeviceDescriptor
+import devsync.monads.FutureEither
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 /**
   * A trait used to find devices somewhere arbitrarily on file system.
@@ -37,5 +37,5 @@ trait DeviceDiscoverer {
     */
   def discover(root: Path,
                levels: Int)
-              (implicit ec: ExecutionContext): EitherT[Future, Exception, (DeviceDescriptor, Path)]
+              (implicit ec: ExecutionContext): FutureEither[Exception, (DeviceDescriptor, Path)]
 }

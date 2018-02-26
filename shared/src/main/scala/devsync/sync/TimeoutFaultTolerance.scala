@@ -20,9 +20,10 @@ import java.util.concurrent.TimeoutException
 
 import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
+import devsync.monads.FutureEither
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * The timeout pattern.
@@ -40,7 +41,7 @@ class TimeoutFaultTolerance(
     * @tparam R
     * @return The result of running the code.
     */
-  override def tolerate[R](block: => EitherT[Future, Exception, R])(implicit ec: ExecutionContext): EitherT[Future, Exception, R] = {
+  override def tolerate[R](block: => FutureEither[Exception, R])(implicit ec: ExecutionContext): FutureEither[Exception, R] = {
     val eventualTimeout: Future[Either[Exception, R]] = Future {
       Thread.sleep(timeoutDuration.toMillis)
       Left(new TimeoutException("Timeout"))

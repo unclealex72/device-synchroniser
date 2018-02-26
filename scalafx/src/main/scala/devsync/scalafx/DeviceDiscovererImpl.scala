@@ -22,6 +22,7 @@ import java.util.function.BiPredicate
 
 import cats.data.EitherT
 import devsync.json.DeviceDescriptor
+import devsync.monads.FutureEither
 import devsync.scalafx.PathResource._
 import devsync.sync.Device
 
@@ -38,7 +39,7 @@ class DeviceDiscovererImpl(val device: Device[Path]) extends DeviceDiscoverer {
     * @inheritdoc
     */
   override def discover(root: Path, levels: Int)
-                       (implicit ec: ExecutionContext): EitherT[Future, Exception, (DeviceDescriptor, Path)] = EitherT {
+                       (implicit ec: ExecutionContext): FutureEither[Exception, (DeviceDescriptor, Path)] = EitherT {
     Future {
       val directoryPredicate = new BiPredicate[Path, BasicFileAttributes] {
         override def test(p: Path, bfa: BasicFileAttributes): Boolean = bfa.isDirectory
