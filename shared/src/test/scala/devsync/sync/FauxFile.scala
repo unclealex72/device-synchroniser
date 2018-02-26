@@ -95,6 +95,8 @@ object FauxFile {
   implicit object FauxResource extends Resource[FauxFile] {
     override def canWrite(fauxFile: FauxFile): Boolean = true
 
+    override def exists(fauxFile: FauxFile): Boolean = true
+
     override def find(fauxFile: FauxFile, path: RelativePath): Option[FauxFile] = {
       (fauxFile, path) match {
         case (d : Directory, DirectoryAndFile(dir, name)) =>

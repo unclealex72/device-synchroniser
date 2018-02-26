@@ -115,6 +115,11 @@ object DocumentFileResource {
     /**
       * @inheritdoc
       */
+    override def exists(documentFile: DocumentFile): Boolean = documentFile.exists
+
+    /**
+      * @inheritdoc
+      */
     override def find(documentFile: DocumentFile, path: RelativePath): Option[DocumentFile] = {
       path match {
         case DirectoryAndFile(dir, name) =>

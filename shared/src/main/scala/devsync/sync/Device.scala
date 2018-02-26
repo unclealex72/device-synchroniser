@@ -85,47 +85,41 @@ trait DeviceListener[R] {
     * @param addition The [[Addition]] that is about to take place.
     * @param maybeTags The [[Tags]] for the addition if they could be loaded.
     * @param maybeArtwork The album artwork for the addition if they could be loaded.
-    * @param number The index of this change.
-    * @param total The total number of changes.
+    * @param overallProgress The overall progress of all changes.
     */
   def addingMusic(
                    addition: Addition,
                    maybeTags: Option[Tags],
                    maybeArtwork: Option[Array[Byte]],
-                   number: Int,
-                   total: Int): Unit
+                   overallProgress: Progress): Unit
 
   /**
     * Notify a user that a track has been added.
     * @param addition The [[Addition]] that has just taken place.
     * @param maybeTags The [[Tags]] for the addition if they could be loaded.
     * @param maybeArtwork The album artwork for the addition if they could be loaded.
-    * @param number The index of this change.
-    * @param total The total number of changes.
+    * @param overallProgress The overall progress of all changes.
     */
   def musicAdded(
                   addition: Addition,
                   maybeTags: Option[Tags],
                   maybeArtwork: Option[Array[Byte]],
-                  number: Int,
-                  total: Int,
+                  overallProgress: Progress,
                   resource: R): Unit
 
   /**
     * Notify a user that a track is about to be removed.
     * @param removal The [[Removal]] that is about to take place.
-    * @param number The index of this change.
-    * @param total The total number of changes.
+    * @param overallProgress The overall progress of all changes.
     */
-  def removingMusic(removal: Removal, number: Int, total: Int): Unit
+  def removingMusic(removal: Removal, overallProgress: Progress): Unit
 
   /**
     * Notify a user that a track has been removed.
     * @param removal The [[Removal]] that has taken place.
-    * @param number The index of this change.
-    * @param total The total number of changes.
+    * @param overallProgress The overall progress of all changes.
     */
-  def musicRemoved(removal: Removal, number: Int, total: Int): Unit
+  def musicRemoved(removal: Removal, overallProgress: Progress): Unit
 
   /**
     * Notify a user that synchronising has failed.

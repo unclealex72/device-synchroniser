@@ -25,7 +25,7 @@ import android.support.v4.provider.DocumentFile
 import com.typesafe.scalalogging.StrictLogging
 import devsync.logging.Messages
 import devsync.json._
-import devsync.sync.DeviceListener
+import devsync.sync.{DeviceListener, Progress}
 import macroid.Contexts
 import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.DocumentFileResource._
@@ -77,15 +77,13 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
     * @param change The [[Change]] action.
     * @param maybeTags The music file's tags, if any.
     * @param maybeArtwork The music file's artwork, if any.
-    * @param number The index of this change.
-    * @param total The total number of changes that will occur.
+    * @param overallProgress The overall progress of this synchronising job.
     */
   case class ChangeModel(
                           change: Change,
                           maybeTags: Option[Tags],
                           maybeArtwork: Option[Array[Byte]],
-                          number: Int,
-                          total: Int)
+                          overallProgress: Progress)
   /**
     * A [[DeviceListener]] that displays progress on a notification.
     * @return A new [[DeviceListener]]
@@ -104,27 +102,25 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
     /**
       * Notify that a track is about to be removed.
       * @param removal The [[Removal]] information.
-      * @param number The index of this change.
-      * @param total The total number of changes.
+      * @param overallProgress The overall progress of this synchronising job.
       */
-    override def removingMusic(removal: Removal, number: Int, total: Int): Unit = {
-      buildAndNotify(Right(ChangeModel(removal, None, None, number, total)))
+    override def removingMusic(removal: Removal, overallProgress: Progress): Unit = {
+      buildAndNotify(Right(ChangeModel(removal, None, None, overallProgress)))
     }
 
-    override def musicRemoved(removal: Removal, number: Int, total: Int): Unit = {}
+    override def musicRemoved(removal: Removal, overallProgress: Progress): Unit = {}
 
     /**
       * Notify that a track is about to be added.
       * @param addition The [[Addition]] information.
       * @param maybeTags The tags for the track about to be added, if any.
       * @param maybeArtwork The artwork for the track about to be added, if any.
-      * @param number The index of this change.
-      * @param total The total number of changes.
+      * @param overallProgress The overall progress of this synchronising job.
       */
     override def addingMusic(addition: Addition,
                              maybeTags: Option[Tags],
-                             maybeArtwork: Option[Array[Byte]], number: Int, total: Int): Unit = {
-      buildAndNotify(Right(ChangeModel(addition, maybeTags, maybeArtwork, number, total)))
+                             maybeArtwork: Option[Array[Byte]], overallProgress: Progress): Unit = {
+      buildAndNotify(Right(ChangeModel(addition, maybeTags, maybeArtwork, overallProgress)))
     }
 
     /**
@@ -132,15 +128,13 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
       * @param addition The [[Addition]] information.
       * @param maybeTags The tags for the track about to be added, if any.
       * @param maybeArtwork The artwork for the track about to be added, if any.
-      * @param number The index of this change.
-      * @param resource The newly added resource.
+      * @param overallProgress The overall progress of this synchronising job.
       */
     override def musicAdded(
                              addition: Addition,
                              maybeTags: Option[Tags],
                              maybeArtwork: Option[Array[Byte]],
-                             number: Int,
-                             total: Int,
+                             overallProgress: Progress,
                              resource: DocumentFile): Unit = {
       sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, resource.getUri))
     }
@@ -186,9 +180,9 @@ class SynchroniseService extends IntentService("devsync") with Contexts[Service]
         builder.
           setContentText(message).
           setOngoing(false)
-      case Right(ChangeModel(change, maybeTags, maybeArtwork, idx, total)) =>
+      case Right(ChangeModel(change, maybeTags, maybeArtwork, overallProgress)) =>
         builder.
-          setProgress(total, idx + 1, false).
+          setProgress(overallProgress.total, overallProgress.number + 1, false).
           setOngoing(true)
         val lines: Seq[String] = maybeTags match {
           case Some(tags) =>

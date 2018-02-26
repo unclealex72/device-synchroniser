@@ -35,6 +35,13 @@ trait Resource[R] extends StrictLogging {
   def canWrite(resource: R): Boolean
 
   /**
+    * Check to see if a resource exists.
+    * @param resource The resource to check.
+    * @return True if the resource can exists, false otherwise.
+    */
+  def exists(resource: R): Boolean
+
+  /**
     * Try and find a resource.
     * @param resource The base resource.
     * @param path A relative path relative to the base resource.
@@ -131,9 +138,11 @@ trait Resource[R] extends StrictLogging {
     * @param resource
     */
   def removeAndCleanDirectories(resource: R): Unit = {
-    remove(resource)
-    Iterator.iterate(parent(resource))(mr => mr.flatMap(parent)).takeWhile(mr => mr.exists(r => !isEmpty(r))).foreach { mr =>
-      mr.foreach(remove)
+    if (exists(resource)) {
+      remove(resource)
+      Iterator.iterate(parent(resource))(mr => mr.flatMap(parent)).takeWhile(mr => mr.exists(r => !isEmpty(r))).foreach { mr =>
+        mr.foreach(remove)
+      }
     }
   }
 }

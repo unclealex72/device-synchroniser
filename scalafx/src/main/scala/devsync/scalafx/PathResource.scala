@@ -41,6 +41,11 @@ object PathResource {
     /**
       * @inheritdoc
       */
+    override def exists(path: Path): Boolean = Files.exists(path)
+
+    /**
+      * @inheritdoc
+      */
     override def find(path: Path, relativePath: RelativePath): Option[Path] = {
       val newPath = relativePath.pathSegments.foldLeft(path)(_.resolve(_))
       Some(newPath).filter(Files.exists(_))

@@ -49,7 +49,7 @@ object Services {
   /**
     * The default [[Device]] to use.
     */
-  val device: Device[Path] = new DeviceImpl[Path](jsonCodec, clock)
+  val device: Device[Path] = new DeviceImpl[Path](jsonCodec, clock, NoOpFaultTolerance)
 
   /**
     * The default [[DeviceDiscoverer]] to use.

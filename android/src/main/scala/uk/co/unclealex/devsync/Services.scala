@@ -22,7 +22,7 @@ import android.support.v4.provider.DocumentFile
 import devsync.discovery.{ClingFlacManagerDiscovery, FlacManagerDiscovery}
 import devsync.json.{CirceCodec, JsonCodec}
 import devsync.remote.{ChangesClient, ChangesClientImpl}
-import devsync.sync.{Device, DeviceImpl}
+import devsync.sync.{Device, DeviceImpl, NoOpFaultTolerance}
 import org.fourthline.cling.android.AndroidUpnpServiceConfiguration
 import org.threeten.bp.Clock
 /**
@@ -55,6 +55,6 @@ object Services {
   /**
     * A singleton instance of [[Device]]
     */
-  val device: Device[DocumentFile] = new DeviceImpl[DocumentFile](jsonCodec, clock)
+  val device: Device[DocumentFile] = new DeviceImpl[DocumentFile](jsonCodec, clock, NoOpFaultTolerance)
 
 }

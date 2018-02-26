@@ -33,12 +33,13 @@ import scala.io.Source
   * The default implementation of [[Device]]
   * @param jsonCodec The [[JsonCodec]] used to decode JSON objects from the Flac Manager server.
   * @param clock The [[Clock]] used to get the current time.
+  * @param faultTolerance Fault tolerance patterns.
   * @tparam R The type of files a device contains. There will need to be typeclasses for both `Resource[R]` and
   *           `ResourceStreamProvider[R]`. This then allows the Android filesystem and the Linux filesystem to
   *           be treated as one.
   */
 class DeviceImpl[R](jsonCodec: JsonCodec,
-                    clock: Clock) extends Device[R] with StrictLogging {
+                    clock: Clock, faultTolerance: FaultTolerance) extends Device[R] with StrictLogging {
 
   /**
     * The name the a device descriptor filename.
@@ -203,10 +204,9 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * is used to report progress in the [[DeviceListener]].
       *
       * @param richChange The original rich change.
-      * @param number The index of this change.
-      * @param total The total number of changes.
+      * @param progress The progress of for the whole synchronisation.
       */
-    case class RichChangeWithProgress(richChange: RichChange, number: Int, total: Int)
+    case class RichChangeWithProgress(richChange: RichChange, progress: Progress)
 
     /**
       * An object used to create [[RichChangeWithProgress]]es.
@@ -220,7 +220,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
         */
       def apply(total: Int): (RichChange, Int) => RichChangeWithProgress = {
         case (change, number) =>
-          RichChangeWithProgress(change, number, total)
+          RichChangeWithProgress(change, Progress(number, total))
       }
     }
 
@@ -236,21 +236,21 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       richChangeWithProgress.richChange match {
         case RichAddition(addition, maybeTags, maybeArtwork) =>
           val eventuallyAddingMusic = Future(deviceListener.addingMusic(
-            addition, maybeTags, maybeArtwork, richChangeWithProgress.number, richChangeWithProgress.total))
+            addition, maybeTags, maybeArtwork, richChangeWithProgress.progress))
           for {
             file <- addMusic(addition)
             _ <- EitherT.right(eventuallyAddingMusic)
             _ <- EitherT.right(Future(deviceListener.musicAdded(
-              addition, maybeTags, maybeArtwork, richChangeWithProgress.number, richChangeWithProgress.total, file)))
+              addition, maybeTags, maybeArtwork, richChangeWithProgress.progress, file)))
           } yield {}
         case RichRemoval(removal) =>
           val eventuallyRemovingMusic = Future(deviceListener.removingMusic(
-            removal, richChangeWithProgress.number, richChangeWithProgress.total))
+            removal, richChangeWithProgress.progress))
           for {
             _ <- removeMusic(removal)
             _ <- EitherT.right(eventuallyRemovingMusic)
             _ <- EitherT.right(Future(deviceListener.musicRemoved(
-              removal, richChangeWithProgress.number, richChangeWithProgress.total)))
+              removal, richChangeWithProgress.progress)))
           } yield {}
       }
     }
@@ -264,12 +264,14 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       addition.relativePath match {
         case rp @ DirectoryAndFile(dir, name) =>
           logger.info(s"Adding $rp")
-          for {
-            directory <- EitherT(Future.successful(resource.mkdirs(root, dir)))
-            file <- EitherT(Future.successful(resource.findOrCreateResource(directory, "audio/mp3", name)))
-            _ <- EitherT(Future.successful(resource.writeTo(file, out => changesClient.music(addition, out))))
-          } yield {
-            file
+          faultTolerance.tolerate {
+            for {
+              directory <- EitherT(Future.successful(resource.mkdirs(root, dir)))
+              file <- EitherT(Future.successful(resource.findOrCreateResource(directory, "audio/mp3", name)))
+              _ <- EitherT(Future.successful(resource.writeTo(file, out => changesClient.music(addition, out))))
+            } yield {
+              file
+            }
           }
         case _ =>
           EitherT.left[Future, Exception, R](

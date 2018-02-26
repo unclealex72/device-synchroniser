@@ -28,7 +28,7 @@ import com.typesafe.scalalogging.StrictLogging
 import devsync.json._
 import devsync.remote.ChangesClient
 import devsync.scalafx.PathResource._
-import devsync.sync.DeviceListener
+import devsync.sync.{DeviceListener, Progress}
 import org.threeten.bp.ZoneId
 import org.threeten.bp.format.DateTimeFormatter
 
@@ -122,15 +122,13 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
                                   addition: Addition,
                                   maybeTags: Option[Tags],
                                   maybeArtwork: Option[Array[Byte]],
-                                  number: Int,
-                                  total: Int): Unit = adding(addition, maybeTags, -1)
+                                  overallProgress: Progress): Unit = adding(addition, maybeTags, -1)
 
         override def musicAdded(
                                  addition: Addition,
                                  maybeTags: Option[Tags],
                                  maybeArtwork: Option[Array[Byte]],
-                                 number: Int,
-                                 total: Int,
+                                 overallProgress: Progress,
                                  resource: Path): Unit = adding(addition, maybeTags, 0)
 
         def adding(addition: Addition, maybeTags: Option[Tags], offset: Int): Unit = ui {
@@ -169,9 +167,9 @@ object DeviceSynchroniserPlus extends JFXApp with StrictLogging {
           changelogItemModels.remove(changelogItemModel)
         }
 
-        override def removingMusic(removal: Removal, number: Int, total: Int): Unit = remove(removal)
+        override def removingMusic(removal: Removal, overallProgress: Progress): Unit = remove(removal)
 
-        override def musicRemoved(removal: Removal, number: Int, total: Int): Unit = {}
+        override def musicRemoved(removal: Removal, overallProgress: Progress): Unit = {}
 
         override def synchronisingFailed(e: Exception, maybeIdx: Option[Int]): Unit = ui {
           controller.error(e)

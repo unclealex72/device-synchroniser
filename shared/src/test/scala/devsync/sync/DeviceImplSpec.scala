@@ -237,21 +237,20 @@ class DeviceImplSpec extends Specification {
                               addition: Addition,
                               maybeTags: Option[Tags],
                               maybeArtwork: Option[Array[Byte]],
-                              number: Int,
-                              total: Int): Unit = {
-      add("ADDING", addition.relativePath, number, total)
+                              overallProgress: Progress): Unit = {
+      add("ADDING", addition.relativePath, overallProgress)
     }
 
-    override def musicAdded(addition: Addition, maybeTags: Option[Tags], maybeArtwork: Option[Array[Byte]], number: Int, total: Int, resource: FauxFile): Unit = {
-      add("ADDED", addition.relativePath, number, total)
+    override def musicAdded(addition: Addition, maybeTags: Option[Tags], maybeArtwork: Option[Array[Byte]], overallProgress: Progress, resource: FauxFile): Unit = {
+      add("ADDED", addition.relativePath, overallProgress)
     }
 
-    override def removingMusic(removal: Removal, number: Int, total: Int): Unit = {
-      add("REMOVING", removal.relativePath, number, total)
+    override def removingMusic(removal: Removal, overallProgress: Progress): Unit = {
+      add("REMOVING", removal.relativePath, overallProgress)
     }
 
-    override def musicRemoved(removal: Removal, number: Int, total: Int): Unit = {
-      add("REMOVED", removal.relativePath, number, total)
+    override def musicRemoved(removal: Removal, overallProgress: Progress): Unit = {
+      add("REMOVED", removal.relativePath, overallProgress)
     }
 
     override def synchronisingFailed(e: Exception, maybeIdx: Option[Int]): Unit = {
