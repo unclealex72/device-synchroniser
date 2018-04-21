@@ -15,12 +15,9 @@
  */
 
 package devsync.sync
-import cats.data._
-import cats.implicits._
 import com.typesafe.scalalogging.StrictLogging
-import devsync.monads.FutureEither
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Try}
 /**
   * The retry pattern.
   */
@@ -37,15 +34,15 @@ class RetryFaultTolerance(
     * @tparam R
     * @return The result of running the code.
     */
-  override def tolerate[R](block: => FutureEither[Exception, R])(implicit ec: ExecutionContext): FutureEither[Exception, R] = {
+  override def tolerate[R](block: => Try[R]): Try[R] = {
     retry(1, block)
   }
 
-  def retry[R](retryAttempt: Int, block: => FutureEither[Exception, R])(implicit ec: ExecutionContext): FutureEither[Exception, R] = {
+  def retry[R](retryAttempt: Int, block: => Try[R]): Try[R] = {
     block.recoverWith {
       case ex: Exception =>
         if (retryAttempt > retryTimes) {
-          EitherT.left[Future, Exception, R](Future.successful(ex))
+          Failure(ex)
         }
         else {
           logger.error(s"An operation failed. Retrying attempt $retryAttempt.", ex)

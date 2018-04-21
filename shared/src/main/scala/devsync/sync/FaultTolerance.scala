@@ -16,9 +16,7 @@
 
 package devsync.sync
 
-import devsync.monads.FutureEither
-
-import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 /**
   * A trait used to wrap network code to make it more fault tolerant.
@@ -32,5 +30,5 @@ trait FaultTolerance {
     * @tparam R
     * @return The result of running the code.
     */
-  def tolerate[R](block: => FutureEither[Exception, R])(implicit ec: ExecutionContext): FutureEither[Exception, R]
+  def tolerate[R](block: => Try[R]): Try[R]
 }

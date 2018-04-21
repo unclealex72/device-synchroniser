@@ -18,15 +18,15 @@ package devsync.remote
 
 import java.io.{ByteArrayOutputStream, OutputStream}
 import java.net.{HttpURLConnection, URL}
-import java.util.Date
 
-import cats.syntax.either._
 import devsync.json.RelativePath._
 import devsync.json.{RelativePath, _}
 import devsync.logging.PassthroughLogging
 import devsync.sync.IO
-import org.threeten.bp.{Instant, ZoneId}
 import org.threeten.bp.format.DateTimeFormatter
+import org.threeten.bp.{Instant, ZoneId}
+
+import scala.util.Try
 
 
 /**
@@ -43,8 +43,8 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
   /**
     * @inheritdoc
     */
-  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changes] = {
-    val since = orDatum(maybeSince)
+  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changes] = {
+    val since: Instant = orDatum(maybeSince)
     logger.info(s"Looking for changes since $since")
     readUrl(_.parseChanges, "changes" / user / extension.extension / since).error(s"Could not download changes since $since")
   }
@@ -52,8 +52,8 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
   /**
     * @inheritdoc
     */
-  override def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changelog] = {
-    val since = orDatum(maybeSince)
+  override def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changelog] = {
+    val since: Instant = orDatum(maybeSince)
     logger.info(s"Loading the changelog since $since")
     readUrl(_.parseChangelog, "changelog" / user / extension.extension / since).error(s"Could not download the changelog since $since")
   }
@@ -72,8 +72,8 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
     * @tparam T The type of JSON object to parse.
     * @return Either a parsed JSON object or an exception.
     */
-  def readUrl[T](parser: JsonCodec => String => Either[Exception, T], relativePath: RelativePath): Either[Exception, T] = {
-    val url = baseUrl / relativePath
+  def readUrl[T](parser: JsonCodec => String => Try[T], relativePath: RelativePath): Try[T] = {
+    val url: URL = baseUrl / relativePath
     for {
       body <- readUrlAsString(url)
       result <- parser(jsonCodec)(body)
@@ -85,9 +85,9 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
     * @param url The URL to load.
     * @param out The output stream to copy the URL's data in to.
     * @param useCache True if the call to the URL should be cached, false otherwise.
-    * @return Either a [[Unit]] on successs or an exception otherwise.
+    * @return Either a [[Unit]] on success or an exception otherwise.
     */
-  def loadUrl(url: URL, out: OutputStream, useCache: Boolean = true): Either[Exception, Unit] = {
+  def loadUrl(url: URL, out: OutputStream, useCache: Boolean = true): Try[Unit] = {
     logger.info(s"Loading url $url")
     val conn = url.openConnection.asInstanceOf[HttpURLConnection]
     if (!useCache) {
@@ -103,7 +103,7 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
     * @param url The URL to read.
     * @return Either the URL's data as a string or an exception.
     */
-  def readUrlAsString(url: URL): Either[Exception, String] = {
+  def readUrlAsString(url: URL): Try[String] = {
     val buff = new ByteArrayOutputStream
     loadUrl(url, buff).map(_ => buff.toString("UTF-8"))
   }.error(s"Could not read the data from")
@@ -111,7 +111,7 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
   /**
     * @inheritdoc
     */
-  override def tags(item: HasLinks with HasRelativePath): Either[Exception, Tags] = {
+  override def tags(item: HasLinks with HasRelativePath): Try[Tags] = {
     for {
       tagsData <- readUrlAsString(item.links.tags)
       tags <- jsonCodec.parseTags(tagsData)
@@ -121,7 +121,7 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
   /**
     * @inheritdoc
     */
-  override def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] = {
+  override def music(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit] = {
     logger.info(s"Downloading music for ${item.relativePath}")
     data(item, _.music, out)
   }.error(s"Could not download the music for ${item.relativePath}")
@@ -129,12 +129,12 @@ class ChangesClientImpl(val jsonCodec: JsonCodec, val baseUrl: URL) extends Chan
   /**
     * @inheritdoc
     */
-  override def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] = {
+  override def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit] = {
     logger.info(s"Downloading artwork for ${item.relativePath}")
     data(item, _.artwork, out)
   }.error(s"Could not download the music for ${item.relativePath}")
 
-  private def data(item: HasLinks, urlExtractor: Links => URL, out: OutputStream): Either[Exception, Unit] = {
+  private def data(item: HasLinks, urlExtractor: Links => URL, out: OutputStream): Try[Unit] = {
     loadUrl(urlExtractor(item.links), out)
   }
 }

@@ -19,9 +19,9 @@ package devsync.scalafx
 import java.nio.file.Path
 
 import devsync.json.DeviceDescriptor
-import devsync.monads.FutureEither
 
 import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 /**
   * A trait used to find devices somewhere arbitrarily on file system.
@@ -37,5 +37,5 @@ trait DeviceDiscoverer {
     */
   def discover(root: Path,
                levels: Int)
-              (implicit ec: ExecutionContext): FutureEither[Exception, (DeviceDescriptor, Path)]
+              (implicit ec: ExecutionContext): Try[(DeviceDescriptor, Path)]
 }

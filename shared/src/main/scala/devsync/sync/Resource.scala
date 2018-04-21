@@ -22,6 +22,8 @@ import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json.RelativePath
 
+import scala.util.Try
+
 /**
   * A type class used to allow the android file system and a desktop file system to be accessed in the same way.
   **/
@@ -56,7 +58,7 @@ trait Resource[R] extends StrictLogging {
     * @param name The name of the new resource.
     * @return Either the new resource or an exception.
     */
-  def findOrCreateResource(resource: R, mimeType: String, name: String): Either[Exception, R]
+  def findOrCreateResource(resource: R, mimeType: String, name: String): Try[R]
 
   /**
     * Create a new directory or do nothing if the directory already exists.
@@ -64,7 +66,7 @@ trait Resource[R] extends StrictLogging {
     * @param name The name of the new directory.
     * @return Either an exception or a new resource for the directory.
     */
-  def mkdir(resource: R, name: String): Either[Exception, R]
+  def mkdir(resource: R, name: String): Try[R]
 
   /**
     * Create a hierarchy of directories or do nothing if the hierarchy already exists.
@@ -72,8 +74,8 @@ trait Resource[R] extends StrictLogging {
     * @param relativePath The relative path of the new directory.
     * @return Either an exception or a new resource for the directory.
     */
-  def mkdirs(resource: R, relativePath: RelativePath): Either[Exception, R] = {
-    val empty: Either[Exception, R] = Right(resource)
+  def mkdirs(resource: R, relativePath: RelativePath): Try[R] = {
+    val empty: Try[R] = Try(resource)
     relativePath.pathSegments.foldLeft(empty) { (acc, name) =>
       acc.flatMap(mkdir(_, name))
     }
@@ -87,8 +89,8 @@ trait Resource[R] extends StrictLogging {
     * @tparam T The type of result to return.
     * @return Either the result of executing the block of code or an exception.
     */
-  def writeTo[T](resource: R, block: OutputStream => Either[Exception, T])
-                         (implicit resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, T] = {
+  def writeTo[T](resource: R, block: OutputStream => Try[T])
+                         (implicit resourceStreamProvider: ResourceStreamProvider[R]): Try[T] = {
     logger.info(s"Opening $resource for writing")
     for {
       out <- resourceStreamProvider.provideOutputStream(resource)
@@ -104,8 +106,8 @@ trait Resource[R] extends StrictLogging {
     * @tparam T The type of result to return.
     * @return Either the result of executing the block of code or an exception.
     */
-  def readFrom[T](resource: R, block: InputStream => Either[Exception, T])
-                          (implicit resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, T] = {
+  def readFrom[T](resource: R, block: InputStream => Try[T])
+                          (implicit resourceStreamProvider: ResourceStreamProvider[R]): Try[T] = {
     logger.info(s"Opening $resource for reading")
     for {
       in <- resourceStreamProvider.provideInputStream(resource)
@@ -158,12 +160,12 @@ trait ResourceStreamProvider[R] {
     * @param resource The resource to be read.
     * @return Either an input stream for the resource or an exception.
     */
-  def provideInputStream(resource: R): Either[Exception, InputStream]
+  def provideInputStream(resource: R): Try[InputStream]
 
   /**
     * Provide an output stream that sends data from to resource.
     * @param resource The resource to be written.
     * @return Either an output stream for the resource or an exception.
     */
-  def provideOutputStream(resource: R): Either[Exception, OutputStream]
+  def provideOutputStream(resource: R): Try[OutputStream]
 }

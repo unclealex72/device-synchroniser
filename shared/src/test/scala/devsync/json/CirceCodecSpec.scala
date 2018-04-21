@@ -135,7 +135,7 @@ class CirceCodecSpec extends Specification {
   }
 
   implicit class StringImplicits(str: String) {
-    def deserialiseUsing[V](method: CirceCodec => (String => Either[Exception, V])): V = {
+    def deserialiseUsing[V](method: CirceCodec => (String => Try[V])): V = {
       val data = Source.fromInputStream(getClass.getResourceAsStream(str)).mkString
       method(new CirceCodec)(data).recover {
         case e: Exception => throw e

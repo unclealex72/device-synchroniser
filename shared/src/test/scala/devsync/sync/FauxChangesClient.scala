@@ -42,8 +42,8 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
     }
   }
 
-  def findChange(relativePath: RelativePath): Either[Exception, FA] = {
-    def filterChange: FauxChange => Either[Exception, FA] = {
+  def findChange(relativePath: RelativePath): Try[FA] = {
+    def filterChange: FauxChange => Try[FA] = {
       case fa : FA => Right(fa)
       case _ : FF => Left(new IOException(s"Change $relativePath is marked as a failure"))
       case _ => Left(new FileNotFoundException(s"Change $relativePath is not an addition"))
@@ -60,7 +60,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
   /**
     * Get the changes for a user since a specific date.
     */
-  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changes] = Right {
+  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changes] = Right {
     this.maybeSince = maybeSince
     Changes(realChanges)
   }
@@ -68,10 +68,10 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
   /**
     * Count the number of changelog items for a user since a specific date
     */
-  override def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changelog] =
+  override def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changelog] =
     Left(new Exception())
 
-  override def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] = {
+  override def music(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit] = {
     findChange(item.relativePath).flatMap { fa =>
       IO.closing(new ByteArrayInputStream(fa.content.getBytes("UTF-8"))) { in =>
         IO.copy(in, out)
@@ -79,7 +79,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
     }
   }
 
-  override def tags(item: HasLinks with HasRelativePath): Either[Exception, Tags] =
+  override def tags(item: HasLinks with HasRelativePath): Try[Tags] =
     findChange(item.relativePath).flatMap { fa =>
       Right(Tags(
         albumArtistSort = fa.artist,
@@ -99,7 +99,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
         trackNumber = fa.track))
     }
 
-  override def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit] =
+  override def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit] =
     Left(new Exception())
 }
 

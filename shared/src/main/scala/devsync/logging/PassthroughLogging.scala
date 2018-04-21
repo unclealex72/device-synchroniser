@@ -33,13 +33,13 @@ trait PassthroughLogging extends StrictLogging {
     }
   }
 
-  implicit class TryImplicits[T](t: Either[Exception, T]) {
-    def error(message: => String): Either[Exception, T] = {
-      t match {
-        case Left(e) => logger.error(message, e)
-        case _ =>
+  implicit class TryImplicits[T](t: Try[T]) {
+    def error(message: => String): Try[T] = {
+      t.recoverWith {
+        case e: Exception =>
+          logger.error(message, e)
+          Failure(e)
       }
-      t
     }
   }
 }

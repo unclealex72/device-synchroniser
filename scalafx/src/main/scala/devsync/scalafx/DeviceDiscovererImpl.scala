@@ -20,14 +20,13 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, Path}
 import java.util.function.BiPredicate
 
-import cats.data.EitherT
 import devsync.json.DeviceDescriptor
-import devsync.monads.FutureEither
 import devsync.scalafx.PathResource._
 import devsync.sync.Device
 
 import scala.collection.JavaConversions._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 /**
   * The default implementation of [[DeviceDiscoverer]].
@@ -39,13 +38,11 @@ class DeviceDiscovererImpl(val device: Device[Path]) extends DeviceDiscoverer {
     * @inheritdoc
     */
   override def discover(root: Path, levels: Int)
-                       (implicit ec: ExecutionContext): FutureEither[Exception, (DeviceDescriptor, Path)] = EitherT {
-    Future {
-      val directoryPredicate = new BiPredicate[Path, BasicFileAttributes] {
-        override def test(p: Path, bfa: BasicFileAttributes): Boolean = bfa.isDirectory
-      }
-      val possibleRoots = Files.find(root, levels, directoryPredicate).iterator().toSeq
-      device.findDeviceDescriptor(possibleRoots)
+                       (implicit ec: ExecutionContext): Try[(DeviceDescriptor, Path)] = {
+    val directoryPredicate = new BiPredicate[Path, BasicFileAttributes] {
+      override def test(p: Path, bfa: BasicFileAttributes): Boolean = bfa.isDirectory
     }
+    val possibleRoots: Seq[Path] = Files.find(root, levels, directoryPredicate).iterator().toSeq
+    device.findDeviceDescriptor(possibleRoots)
   }
 }

@@ -16,11 +16,11 @@
 
 package devsync.sync
 
-import scala.concurrent.Future
 import devsync.json.{Addition, DeviceDescriptor, Removal, Tags}
 import devsync.remote.ChangesClient
 
 import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 /**
   * A device represents a user owned device that can be synchronised.
@@ -47,7 +47,7 @@ trait Device[R] {
                    changesClient: ChangesClient,
                    deviceListener: DeviceListener[R])(implicit resource: Resource[R],
                                                       resourceStreamProvider: ResourceStreamProvider[R],
-                                                      ec: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]]
+                                                      ec: ExecutionContext): Either[(Exception, Option[Int]), Int]
 
   /**
     * Find a [[DeviceDescriptor]] for this device.
@@ -59,7 +59,7 @@ trait Device[R] {
   def findDeviceDescriptor(roots: Iterable[R])
                           (implicit resource: Resource[R],
                            resourceStreamProvider: ResourceStreamProvider[R])
-  : Either[Exception, (DeviceDescriptor, R)]
+  : Try[(DeviceDescriptor, R)]
 
   /**
     * Reload a device descriptor.
@@ -70,7 +70,7 @@ trait Device[R] {
     */
   def reloadDeviceDescriptor(location: R)
                             (implicit resource: Resource[R],
-                             resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor]
+                             resourceStreamProvider: ResourceStreamProvider[R]): Try[DeviceDescriptor]
 }
 
 trait DeviceListener[R] {

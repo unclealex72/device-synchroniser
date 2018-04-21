@@ -18,8 +18,8 @@ package uk.co.unclealex.devsync
 
 import java.io.{IOException, InputStream, OutputStream}
 
+import android.net.Uri
 import android.support.v4.provider.DocumentFile
-import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json.{DirectoryAndFile, RelativePath}
 import devsync.sync.{IO, Resource, ResourceStreamProvider}
@@ -41,31 +41,26 @@ object DocumentFileResource {
                              name: String,
                              builder: String => DocumentFile,
                              isRequiredType: DocumentFile => Boolean,
-                             wrongTypeMessage: String => String): Either[Exception, DocumentFile]  = {
+                             wrongTypeMessage: String => String): Try[DocumentFile]  = Try {
       Option(documentFile.findFile(name)) match {
-        case Some(file) if isRequiredType(file) => Right(file)
+        case Some(file) if isRequiredType(file) => file
         case None =>
-          try {
             logger.info(s"Creating $name")
-            Right(builder(name))
-          }
-          catch {
-            case e: Exception => Left(e)
-          }
-        case _ => Left(new IOException(wrongTypeMessage(name)))
+            builder(name)
+        case _ => throw new IOException(wrongTypeMessage(name))
       }
     }
 
     /**
       * @inheritdoc
       */
-    override def mkdir(documentFile: DocumentFile, name: String): Either[Exception, DocumentFile] =
+    override def mkdir(documentFile: DocumentFile, name: String): Try[DocumentFile] =
       findOrCreate(documentFile, name, documentFile.createDirectory, _.isDirectory, name => s"$name is not a directory")
 
     /**
       * @inheritdoc
       */
-    override def findOrCreateResource(documentFile: DocumentFile, mimeType: String, name: String): Either[Exception, DocumentFile] =
+    override def findOrCreateResource(documentFile: DocumentFile, mimeType: String, name: String): Try[DocumentFile] =
       findOrCreate(
         documentFile,
         name,
@@ -76,9 +71,9 @@ object DocumentFileResource {
     /**
       * @inheritdoc
       */
-    override def writeTo[T](documentFile: DocumentFile, block: OutputStream => Either[Exception, T])
-                        (implicit resourceStreamProvider: ResourceStreamProvider[DocumentFile]): Either[Exception, T] = {
-      val uri = documentFile.getUri
+    override def writeTo[T](documentFile: DocumentFile, block: OutputStream => Try[T])
+                        (implicit resourceStreamProvider: ResourceStreamProvider[DocumentFile]): Try[T] = {
+      val uri: Uri = documentFile.getUri
       logger.info(s"Opening $uri for writing")
       for {
         out <- resourceStreamProvider.provideOutputStream(documentFile)
@@ -89,9 +84,9 @@ object DocumentFileResource {
     /**
       * @inheritdoc
       */
-    override def readFrom[T](documentFile: DocumentFile, block: InputStream => Either[Exception, T])
-                         (implicit resourceStreamProvider: ResourceStreamProvider[DocumentFile]): Either[Exception, T] = {
-      val uri = documentFile.getUri
+    override def readFrom[T](documentFile: DocumentFile, block: InputStream => Try[T])
+                         (implicit resourceStreamProvider: ResourceStreamProvider[DocumentFile]): Try[T] = {
+      val uri: Uri = documentFile.getUri
       logger.info(s"Opening $uri for reading")
       for {
         in <- resourceStreamProvider.provideInputStream(documentFile)
@@ -123,13 +118,13 @@ object DocumentFileResource {
     override def find(documentFile: DocumentFile, path: RelativePath): Option[DocumentFile] = {
       path match {
         case DirectoryAndFile(dir, name) =>
-          val directoryPathSegments = dir.pathSegments
+          val directoryPathSegments: Seq[String] = dir.pathSegments
           if (directoryPathSegments.isEmpty) {
             Option(documentFile.findFile(name))
           }
           else {
-            val maybeChildDirName = directoryPathSegments.headOption
-            val tail = RelativePath(directoryPathSegments.tail) / name
+            val maybeChildDirName: Option[String] = directoryPathSegments.headOption
+            val tail: RelativePath = RelativePath(directoryPathSegments.tail) / name
             for {
               childDirName <- maybeChildDirName
               childDir <- Option(documentFile.findFile(childDirName))
@@ -162,25 +157,15 @@ object DocumentFileResource {
     /**
       * @inheritdoc
       */
-    override def provideInputStream(resource: DocumentFile): Either[Exception, InputStream] = {
-      try {
-        Right(contextWrapper.bestAvailable.getContentResolver.openInputStream(resource.getUri))
-      }
-      catch {
-        case e: Exception => Left(e)
-      }
+    override def provideInputStream(resource: DocumentFile): Try[InputStream] = {
+        Try(contextWrapper.bestAvailable.getContentResolver.openInputStream(resource.getUri))
     }
 
     /**
       * @inheritdoc
       */
-    override def provideOutputStream(resource: DocumentFile): Either[Exception, OutputStream] = {
-      try {
-        Right(contextWrapper.bestAvailable.getContentResolver.openOutputStream(resource.getUri))
-      }
-      catch {
-        case e: Exception => Left(e)
-      }
+    override def provideOutputStream(resource: DocumentFile): Try[OutputStream] = {
+        Try(contextWrapper.bestAvailable.getContentResolver.openOutputStream(resource.getUri))
     }
   }
 }

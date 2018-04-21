@@ -16,25 +16,25 @@
 
 package uk.co.unclealex.devsync
 
+import android.Manifest.permission
 import android.app.Activity
-import android.content.{Context, Intent}
+import android.content.pm.PackageManager
+import android.content.{Context, Intent, SharedPreferences}
 import android.net.Uri
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v4.provider.DocumentFile
-import android.widget.ViewSwitcher
-import cats.syntax.either._
 import devsync.logging.PassthroughLogging
+import devsync.sync.Device
 import macroid._
 import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Success
-import android.Manifest.permission
-import android.content.pm.PackageManager
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
+import scala.util.{Failure, Success, Try}
 
 /**
   * An activity that shows a progress spinner whilst searching for a Flac Manager server and
@@ -66,11 +66,11 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
       permission.CHANGE_WIFI_MULTICAST_STATE,
       permission.ACCESS_NETWORK_STATE,
       permission.WAKE_LOCK)
-    val missingPermissions = requiredPermissions.filter { pm =>
+    val missingPermissions: Seq[String] = requiredPermissions.filter { pm =>
       ContextCompat.checkSelfPermission(this, pm) != PackageManager.PERMISSION_GRANTED
     }
     if (missingPermissions.isEmpty) {
-      val prefs = getPreferences(Context.MODE_PRIVATE)
+      val prefs: SharedPreferences = getPreferences(Context.MODE_PRIVATE)
       val maybeDeviceUri = Option(prefs.getString(Constants.Prefs.resourceUri, null))
       processDeviceDescriptor(maybeDeviceUri)
     }
@@ -84,18 +84,18 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     */
   private def processDeviceDescriptor(maybeDeviceUri: Option[String]): Unit = {
     implicit val resourceStreamProvider: DocumentFileResourceStreamProvider = new DocumentFileResourceStreamProvider()
-    val device = Services.device
+    val device: Device[DocumentFile] = Services.device
     val maybeDeviceResource: Option[DocumentFile] = for {
       uri <- maybeDeviceUri
       deviceResource <- Some(DocumentFile.fromTreeUri(this, Uri.parse(uri)))
     } yield deviceResource
-    val tryDeviceDescriptorAndUri =
+    val tryDeviceDescriptorAndUri: Try[DeviceDescriptorAndUri] =
       device.findDeviceDescriptor(maybeDeviceResource).map {
         case (deviceDescriptor, documentRoot) =>
           DeviceDescriptorAndUri(deviceDescriptor, documentRoot.getUri.toString)
       }
     tryDeviceDescriptorAndUri match {
-      case Left(e) =>
+      case Failure(e) =>
         DialogBuilder.
           title(R.string.no_device_descriptor_title).
           message(Seq(e.getMessage, "Please search").mkString("\n")).
@@ -105,21 +105,23 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
             startActivityForResult(intent, 0)
           }.
           show
-      case Right(deviceDescriptorAndUri) =>
-        val dev = Option(getIntent.getExtras).exists(_.getBoolean("FLAC_DEV"))
-        Services.flacManagerDiscovery.discover(dev, 30.seconds).value.onComplete {
-          case Success(Right(url)) =>
-            Ui(next(deviceDescriptorAndUri, url.toString)).run
-          case _ =>
-            DialogBuilder.
-              title(R.string.no_flac_manager_service_title).
-              message(R.string.no_flac_manager_service_message).
-              positiveButton(R.string.yes) {
-                processDeviceDescriptor(Some(deviceDescriptorAndUri.uri))
-              }.
-              negativeButton(R.string.no) {
-                this.finishAndRemoveTask()
-              }.show
+      case Success(deviceDescriptorAndUri) =>
+        val dev: Boolean = Option(getIntent.getExtras).exists(_.getBoolean("FLAC_DEV"))
+        Future {
+          Services.flacManagerDiscovery.discover(dev, 30.seconds) match {
+            case Success(url) =>
+              Ui(next(deviceDescriptorAndUri, url.toString)).run
+            case _ =>
+              DialogBuilder.
+                title(R.string.no_flac_manager_service_title).
+                message(R.string.no_flac_manager_service_message).
+                positiveButton(R.string.yes) {
+                  processDeviceDescriptor(Some(deviceDescriptorAndUri.uri))
+                }.
+                negativeButton(R.string.no) {
+                  this.finishAndRemoveTask()
+                }.show
+          }
         }
     }
   }
@@ -131,10 +133,10 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     * @param data The URI of the location of the device descriptor file.
     */
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
-    val treeUri = data.getData
+    val treeUri: Uri = data.getData
     getContentResolver.takePersistableUriPermission(
       treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-    val prefs = getPreferences(Context.MODE_PRIVATE)
+    val prefs: SharedPreferences = getPreferences(Context.MODE_PRIVATE)
     prefs.edit().putString(Constants.Prefs.resourceUri, treeUri.toString).commit()
     processDeviceDescriptor(Some(treeUri.toString))
   }
@@ -145,7 +147,7 @@ class DeviceDiscoveryActivity extends Activity with Contexts[Activity] with Pass
     * @param serverUrl The URL of the Flac Manager server.
     */
   def next(deviceDescriptorAndUri: DeviceDescriptorAndUri, serverUrl: String): Unit = {
-    val intent = new Intent(this, classOf[DeviceSynchroniserActivity]).
+    val intent: Intent = new Intent(this, classOf[DeviceSynchroniserActivity]).
       setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK).
       putResourceUri(deviceDescriptorAndUri.uri).
       putServerUrl(serverUrl)

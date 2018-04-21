@@ -28,7 +28,6 @@ import android.support.v7.app.{AlertDialog, AppCompatActivity}
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{Gravity, LayoutInflater, View, ViewGroup}
 import android.widget._
-import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json._
 import devsync.logging.Messages
@@ -36,14 +35,15 @@ import devsync.remote.ChangesClient
 import macroid.FullDsl.{text, _}
 import macroid._
 import macroid.extras.ImageViewTweaks._
-import org.threeten.bp.{Instant, ZoneId}
 import org.threeten.bp.format.DateTimeFormatter
+import org.threeten.bp.{Instant, ZoneId}
 import uk.co.unclealex.devsync.Async._
 import uk.co.unclealex.devsync.DocumentFileResource._
 import uk.co.unclealex.devsync.IntentHelper._
 import uk.co.unclealex.devsync.ViewSwitcherHelper._
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 
 /**
@@ -64,15 +64,15 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     val resourceUri = intent.resourceUri
 
     Services.device.reloadDeviceDescriptor(DocumentFile.fromTreeUri(this, Uri.parse(resourceUri))) match {
-      case Right(deviceDescriptor) =>
-        def lastUpdated(t: TextView) = {
+      case Success(deviceDescriptor) =>
+        def lastUpdated(t: TextView): Ui[TextView] = {
           t <~ text(Messages.Changes.maybeLastUpdated(deviceDescriptor.maybeLastModified))
         }
 
         if (deviceDescriptor != intent.deviceDescriptor) {
           intent.putDeviceDescriptor(deviceDescriptor)
-          val serverUrl = intent.serverUrl
-          val rootView = findViewById(R.id.synchronise_content)
+          val serverUrl: String = intent.serverUrl
+          val rootView: View = findViewById(R.id.synchronise_content)
           def setupGui(): Ui[_] = {
             Transformer {
               case MainViewSwitcher(v) => v.showChildWithId(R.id.changes_layout)
@@ -80,7 +80,7 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
               case UpToDateLastUpdatedView(t) => lastUpdated(t)
               case ChangeCountView(t) => t <~ text(Messages.Changes.changes(0))
               case SynchroniseButtonView(b) => b <~ disable <~ On.click {
-                val synchroniseIntent =
+                val synchroniseIntent: Intent =
                   new Intent(this, classOf[SynchroniseService]).
                     putDeviceDescriptor(deviceDescriptor).
                     putResourceUri(resourceUri).
@@ -91,10 +91,10 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
             }(rootView)
           }
           def updateChangelog(): Future[_] = {
-            val changesClient = Services.changesClient(new URL(serverUrl))
-            populateChangelog(
-              changesClient, deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified).mapUi {
-              case Right(changelog) =>
+            val changesClient: ChangesClient = Services.changesClient(new URL(serverUrl))
+            Future(populateChangelog(
+              changesClient, deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified)).mapUi {
+              case Success(changelog) =>
                 Transformer {
                   case ChangesContainerView(rv) =>
                     rv.setLayoutManager {
@@ -111,14 +111,14 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
                   case MainViewSwitcher(v) if changelog.items.isEmpty =>
                     v.showChildWithId(R.id.up_to_date_layout)
                 }(rootView)
-              case Left(e) =>
+              case Failure(e) =>
                 logger.error("Could not get the list of changes.", e)
                 dialog(e.getMessage)
             }
           }
           setupGui().run.flatMap(_ => updateChangelog())
         }
-      case Left(_) =>
+      case Failure(_) =>
         val builder = new AlertDialog.Builder(this)
         builder.setMessage(R.string.no_device_descriptor_message).setTitle(R.string.no_device_descriptor_title)
         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
@@ -141,15 +141,15 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
     override def getItemCount: Int = changelog.items.size
 
     override def onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): AlbumViewHolder = {
-      val itemView = LayoutInflater.
+      val itemView: View = LayoutInflater.
         from(viewGroup.getContext).
         inflate(R.layout.changelog_item, viewGroup, false)
       new AlbumViewHolder(itemView)
     }
 
-    private def loadArtwork(vh: AlbumViewHolder, changelogItem: ChangelogItem) = Future {
-      val artworkView = vh.albumArtwork.get.get
-      val maybeBuffer = {
+    private def loadArtwork(vh: AlbumViewHolder, changelogItem: ChangelogItem): Future[Option[W]] = Future {
+      val artworkView: W = vh.albumArtwork.get.get
+      val maybeBuffer: Option[Array[Byte]] = {
         val buffer = new ByteArrayOutputStream()
         changesClient.artwork(changelogItem, buffer).toOption.map(_ => buffer.toByteArray)
       }
@@ -158,21 +158,23 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
       vh.albumArtwork <~ ivSrc(bitmap)
     }
 
-    private def loadTags(vh: AlbumViewHolder, changelogItem: ChangelogItem) = Future {
-      changesClient.tags(changelogItem)
-    }.map {
-      case Right(tags) =>
-        (tags.album, tags.artist)
-      case Left(_) =>
-        (changelogItem.relativePath.toString, Messages.Changes.removed)
-    }.mapUi {
-      case (albumText, artistText) =>
-        Ui.sequence(
-          vh.albumText <~ text(albumText),
-          vh.artistText <~ text(artistText)
-        )
-
+    private def loadTags(vh: AlbumViewHolder, changelogItem: ChangelogItem): Future[Seq[Option[TextView]]] = {
+      Future {
+        changesClient.tags(changelogItem)
+      }.map {
+        case Success(tags) =>
+          (tags.album, tags.artist)
+        case Failure(_) =>
+          (changelogItem.relativePath.toString, Messages.Changes.removed)
+      }.mapUi {
+        case (albumText, artistText) =>
+          Ui.sequence(
+            vh.albumText <~ text(albumText),
+            vh.artistText <~ text(artistText)
+          )
+      }
     }
+
 
     override def onBindViewHolder(vh: AlbumViewHolder, idx: Int): Unit = {
       val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").withZone(ZoneId.systemDefault())
@@ -202,7 +204,7 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
                          changesClient: ChangesClient,
                          user: String,
                          extension: Extension,
-                         maybeLastModified: Option[Instant]): Future[Either[Exception, Changelog]] = Future {
+                         maybeLastModified: Option[Instant]): Try[Changelog] = {
     changesClient.changelogSince(user, extension, maybeLastModified)
   }
 

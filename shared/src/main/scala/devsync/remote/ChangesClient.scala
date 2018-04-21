@@ -21,6 +21,8 @@ import java.io.OutputStream
 import devsync.json._
 import org.threeten.bp.Instant
 
+import scala.util.Try
+
 /**
   * A trait that can be used to find [[Changes]] and [[Changelog]]s from a Flac Manager server.
   **/
@@ -33,7 +35,7 @@ trait ChangesClient {
     * @param maybeSince The earliest time for changes or none for all changes.
     * @return Either a [[Changes]] object from the server or an exception.
     */
-  def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changes]
+  def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changes]
 
   /**
     * Get the changelog for a user since a specific date..
@@ -42,7 +44,7 @@ trait ChangesClient {
     * @param maybeSince The earliest time for changes or none for all changes.
     * @return Either a [[Changes]] object from the server or an exception.
     */
-  def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Either[Exception, Changelog]
+  def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changelog]
 
   /**
     * Download the music for a track.
@@ -50,14 +52,14 @@ trait ChangesClient {
     * @param out An output stream to where the music will be copied.
     * @return Either [[Unit]] or an exception.
     */
-  def music(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit]
+  def music(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit]
 
   /**
     * Download the tags for a track.
     * @param item The item who's tags needs to be downloaded.
     * @return Either the item's [[Tags]] or an exception.
     */
-  def tags(item: HasLinks with HasRelativePath): Either[Exception, Tags]
+  def tags(item: HasLinks with HasRelativePath): Try[Tags]
 
   /**
     * Download the album artwork for a track.
@@ -65,5 +67,5 @@ trait ChangesClient {
     * @param out An output stream to where the album artwork will be copied.
     * @return Either [[Unit]] or an exception.
     */
-  def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Either[Exception, Unit]
+  def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit]
 }

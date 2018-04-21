@@ -16,11 +16,8 @@
 
 package devsync.discovery
 import java.net.URL
-import java.util.concurrent.TimeoutException
 
-import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
-import devsync.monads.FutureEither
 import org.fourthline.cling.model.message.header.UDADeviceTypeHeader
 import org.fourthline.cling.model.meta.RemoteDevice
 import org.fourthline.cling.model.types.{UDADeviceType, UDAServiceId}
@@ -28,7 +25,7 @@ import org.fourthline.cling.registry.{DefaultRegistryListener, Registry}
 import org.fourthline.cling.{UpnpServiceConfiguration, UpnpServiceImpl}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.util.Try
 
 /**
@@ -40,11 +37,10 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
   /**
     * @inheritdoc
     */
-  override def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): FutureEither[Exception, URL] = EitherT {
-
+  override def discover(dev: Boolean, timeout: Duration)(implicit ec: ExecutionContext): Try[URL] = {
     val urlPromise: Promise[URL]  = Promise()
     val upnpService = new UpnpServiceImpl(upnpServiceConfiguration)
-    val identifier = "FlacManagerService" + (if (dev) "Dev" else "")
+    val identifier: String = "FlacManagerService" + (if (dev) "Dev" else "")
     val udaType = new UDADeviceType(identifier)
     val serviceId = new UDAServiceId(identifier)
     upnpService.getRegistry.addListener(new DefaultRegistryListener {
@@ -60,30 +56,11 @@ class ClingFlacManagerDiscovery(upnpServiceConfiguration: UpnpServiceConfigurati
       }
     })
     upnpService.getControlPoint.search(new UDADeviceTypeHeader(udaType))
-    val timeoutPromise: Promise[URL] = Promise()
-    val timeoutThread = new Thread {
-      override def run(): Unit = {
-        try {
-          Thread.sleep(timeout.toMillis)
-          timeoutPromise.failure(new TimeoutException("Could not find a Flac Manager server within " + timeout))
-        }
-        catch {
-          case _: InterruptedException => timeoutPromise.success(new URL("http://localhost"))
-        }
-      }
-    }
-    timeoutThread.start()
-    val timeoutFuture: Future[URL] = timeoutPromise.future
     val urlFuture: Future[URL] = urlPromise.future
-    val timingOutUrlFuture = Future.firstCompletedOf(Seq(timeoutFuture, urlFuture)).map(Right(_))
-    timingOutUrlFuture.map { value =>
-      Future {
-        Try(upnpService.shutdown())
-        Try(timeoutThread.interrupt())
-      }
-      value
-    }.recover {
-      case e: Exception => Left(e)
+    val url = Try(Await.result(urlFuture, timeout))
+    Future {
+      Try(upnpService.shutdown())
     }
+    url
   }
 }

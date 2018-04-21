@@ -48,13 +48,10 @@ object IO {
     * @return Either the result of running the block or an exception.
     */
   def closingTry[T, C <: Closeable](closeable: => C)
-                                   (block: C => Either[Exception, T],
-                                    afterClose: => Unit = {}): Either[Exception, T] = {
+                                   (block: C => Try[T],
+                                    afterClose: => Unit = {}): Try[T] = {
     try {
       block(closeable)
-    }
-    catch {
-      case e: Exception => Left(e)
     }
     finally {
       Try(closeable.close())
@@ -71,7 +68,7 @@ object IO {
     * @tparam C The type of the closeable.
     * @return Either the result of running the block or an exception.
     */
-  def closing[T, C <: Closeable](closeable: => C, afterClose: => Unit = {})(block: C => T): Either[Exception, T] = {
-    closingTry(closeable)(cl => Right(block(cl)))
+  def closing[T, C <: Closeable](closeable: => C, afterClose: => Unit = {})(block: C => T): Try[T] = {
+    closingTry(closeable)(cl => Try(block(cl)))
   }
 }

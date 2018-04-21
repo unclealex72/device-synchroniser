@@ -15,9 +15,7 @@
  */
 
 package devsync.sync
-import devsync.monads.FutureEither
-
-import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 /**
   * A fault tolerance instance that does nothing.
@@ -30,7 +28,7 @@ class NoOpFaultTolerance extends FaultTolerance {
     * @tparam R
     * @return The result of running the code.
     */
-  override def tolerate[R](block: => FutureEither[Exception, R])(implicit ec: ExecutionContext): FutureEither[Exception, R] = {
+  override def tolerate[R](block: => Try[R]): Try[R] = {
     block
   }
 }

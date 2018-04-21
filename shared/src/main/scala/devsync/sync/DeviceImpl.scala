@@ -19,16 +19,16 @@ package devsync.sync
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 import cats.data.EitherT
-import cats.instances.future._
 import cats.syntax.either._
+import cats.implicits._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json._
-import devsync.monads.FutureEither
 import devsync.remote.ChangesClient
 import org.threeten.bp.Clock
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
 /**
   * The default implementation of [[Device]]
@@ -67,16 +67,15 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
                             changesClient: ChangesClient,
                             deviceListener: DeviceListener[R])(implicit resource: Resource[R],
                                                                resourceStreamProvider: ResourceStreamProvider[R],
-                                                               executionContext: ExecutionContext): Future[Either[(Exception, Option[Int]), Int]] = {
-    Future(deviceListener.synchronisingStarting())
+                                                               executionContext: ExecutionContext): Either[(Exception, Option[Int]), Int] = {
+    deviceListener.synchronisingStarting()
     reloadDeviceDescriptor(root) match {
-      case Right(deviceDescriptor) =>
-        new Synchroniser(root, changesClient, deviceListener, deviceDescriptor).synchronise.map { result =>
-          result.leftMap(ewmi => (ewmi.e, ewmi.maybeIdx))
-        }
-      case Left(e) =>
+      case Success(deviceDescriptor) =>
+        val synchronise: Either[EWMI, Int] = new Synchroniser(root, changesClient, deviceListener, deviceDescriptor).synchronise
+        synchronise.leftMap(ewmi => (ewmi.e, ewmi.maybeIdx))
+      case Failure(e : Exception) =>
         deviceListener.synchronisingFailed(e, None)
-        Future.successful(Left(e, None))
+        Left(e, None)
     }
   }
 
@@ -89,42 +88,35 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
     * @param deviceDescriptor The [[DeviceDescriptor]] file that describes the device.
     * @param resource A typeclass with file-like properties.
     * @param resourceStreamProvider A typeclass used to get a stream of data from a resource.
-    * @param executionContext An execution context for running synchronisation in another thread.
     */
   class Synchroniser(root: R, changesClient: ChangesClient, deviceListener: DeviceListener[R], deviceDescriptor: DeviceDescriptor)(implicit resource: Resource[R],
-                                                                                                                                   resourceStreamProvider: ResourceStreamProvider[R],
-                                                                                                                                   executionContext: ExecutionContext) {
+                                                                                                                                   resourceStreamProvider: ResourceStreamProvider[R]) {
 
     /**
       * Synchronise the device.
       * @return Eventually either an [[EWMI]] or the number of changes.
       */
-    def synchronise: Future[Either[EWMI, Int]] = {
-      val wrappedResult = for {
+    def synchronise: Either[EWMI, Int] = {
+      val wrappedResult: Either[EWMI, Int] = for {
         changes <- loadChanges
         result <- processChanges(changes)
       } yield result
-      wrappedResult.value.flatMap { result =>
-        Future {
-          updateDeviceDescriptor(deviceDescriptor, result) match {
-            case Right(_) => result match {
-              case Right(count) =>
-                logger.info("Synchronising completed successfully.")
-                deviceListener.synchronisingFinished(count)
-                Right(count)
-              case Left(ewmi) =>
-                val e = ewmi.e
-                val idx = ewmi.maybeIdx
-                logger.error(s"Synchronising Failed at index $idx:", e)
-                deviceListener.synchronisingFailed(e, idx)
-                Left(ewmi)
-            }
-            case Left(e) =>
-              logger.error("Synchronising Failed:", e)
-              deviceListener.synchronisingFailed(e, None)
-              Left(ExceptionWithMaybeIndex(e, None))
-          }
+      updateDeviceDescriptor(deviceDescriptor, wrappedResult) match {
+        case Success(_) => wrappedResult match {
+          case Right(count) =>
+            logger.info("Synchronising completed successfully.")
+            deviceListener.synchronisingFinished(count)
+            Right(count)
+          case Left(ewmi) =>
+            val (e, idx) = (ewmi.e, ewmi.maybeIdx)
+            logger.error(s"Synchronising Failed at index $idx:", e)
+            deviceListener.synchronisingFailed(e, idx)
+            Left(ewmi)
         }
+        case Failure(e: Exception) =>
+          logger.error("Synchronising Failed:", e)
+          deviceListener.synchronisingFailed(e, None)
+          Left(ExceptionWithMaybeIndex(e, None))
       }
 
     }
@@ -133,11 +125,10 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * Load the [[Changes]] from a Flac Manager server.
       * @return Eventually either a [[Changes]] object or a failure.
       */
-    def loadChanges: FutureEither[EWMI, Changes] = EitherT {
-      Future {
-        changesClient.changesSince(deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified).leftMap {
-          e => ExceptionWithMaybeIndex(e)
-        }
+    def loadChanges: Either[EWMI, Changes] = {
+      changesClient.changesSince(deviceDescriptor.user, deviceDescriptor.extension, deviceDescriptor.maybeLastModified) match {
+        case Success(changes) => Right(changes)
+        case Failure(ex: Exception) => Left(ExceptionWithMaybeIndex(ex))
       }
     }
 
@@ -146,35 +137,30 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param changes The [[Changes]] object downloaded from the Flac Manager server.
       * @return Eventually either the number of changes or a failure.
       */
-    def processChanges(changes: Changes): FutureEither[EWMI, Int] = {
-      val empty: FutureEither[EWMI, Unit] = EitherT.right[Future, EWMI, Unit](Future.successful({}))
+    def processChanges(changes: Changes): Either[EWMI, Int] = {
+      val empty: Either[EWMI, Unit] = Right({})
       val total = changes.changes.size
       val richChangeWithProgressBuilder = RichChangeWithProgress(total)
-      val previouslyUntriedChanges = changes.changes.zipWithIndex.drop(deviceDescriptor.maybeOffset.getOrElse(0))
+      val previouslyUntriedChanges: Seq[(Change, Int)] =
+        changes.changes.zipWithIndex.drop(deviceDescriptor.maybeOffset.getOrElse(0))
       previouslyUntriedChanges.foldLeft(empty) { (acc, changeWithIndex) =>
         acc.flatMap { _ =>
-          val change = changeWithIndex._1
-          val idx = changeWithIndex._2
-          val eventualRichChange: Future[RichChange] = change match {
+          val change: Change = changeWithIndex._1
+          val idx: Int = changeWithIndex._2
+          val richChange: RichChange = change match {
             case addition: Addition =>
-              val eventualMaybeTags = Future(changesClient.tags(addition).toOption)
-              val eventualMaybeArtwork = Future {
+              val maybeTags: Option[Tags] = changesClient.tags(addition).toOption
+              val maybeArtwork: Option[Array[Byte]] = {
                 val buff = new ByteArrayOutputStream()
                 IO.closingTry(buff)(changesClient.artwork(addition, _)).toOption.map(_ => buff.toByteArray)
               }
-              for {
-                maybeTags <- eventualMaybeTags
-                maybeArtwork <- eventualMaybeArtwork
-              } yield {
-                RichAddition(addition, maybeTags, maybeArtwork)
-              }
-            case removal: Removal => Future.successful(RichRemoval(removal))
+              RichAddition(addition, maybeTags, maybeArtwork)
+            case removal: Removal => RichRemoval(removal)
           }
-          val eventualRichChangeWithProgress = eventualRichChange.map { richChange =>
-            richChangeWithProgressBuilder(richChange, idx)
-          }
-          EitherT.right(eventualRichChangeWithProgress).flatMap(processRichChangeWithProgress).leftMap { e =>
-            ExceptionWithMaybeIndex(e, Some(idx))
+          val richChangeWithProgress = richChangeWithProgressBuilder(richChange, idx)
+          processRichChangeWithProgress(richChangeWithProgress) match {
+            case Success(rcwp) => Right(rcwp)
+            case Failure(ex: Exception) => Left(ExceptionWithMaybeIndex(ex, Some(idx)))
           }
         }
       }.map(_ => total)
@@ -231,28 +217,20 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param richChangeWithProgress The change to process.
       * @return Eventually [[Unit]] or an exception.
       */
-    def processRichChangeWithProgress(richChangeWithProgress: RichChangeWithProgress): FutureEither[Exception, Unit] = {
+    def processRichChangeWithProgress(richChangeWithProgress: RichChangeWithProgress): Try[Unit] = {
       // When adding and removing music we need to make sure that the addingMusic and removingMusic events are
       // always called before musicAdded and musicRemoved.
       richChangeWithProgress.richChange match {
         case RichAddition(addition, maybeTags, maybeArtwork) =>
-          val eventuallyAddingMusic = Future(deviceListener.addingMusic(
-            addition, maybeTags, maybeArtwork, richChangeWithProgress.progress))
-          for {
-            file <- addMusic(addition)
-            _ <- EitherT.right(eventuallyAddingMusic)
-            _ <- EitherT.right(Future(deviceListener.musicAdded(
-              addition, maybeTags, maybeArtwork, richChangeWithProgress.progress, file)))
-          } yield {}
+          deviceListener.addingMusic(addition, maybeTags, maybeArtwork, richChangeWithProgress.progress)
+          addMusic(addition).map { file =>
+            deviceListener.musicAdded(addition, maybeTags, maybeArtwork, richChangeWithProgress.progress, file)
+          }
         case RichRemoval(removal) =>
-          val eventuallyRemovingMusic = Future(deviceListener.removingMusic(
-            removal, richChangeWithProgress.progress))
-          for {
-            _ <- removeMusic(removal)
-            _ <- EitherT.right(eventuallyRemovingMusic)
-            _ <- EitherT.right(Future(deviceListener.musicRemoved(
-              removal, richChangeWithProgress.progress)))
-          } yield {}
+          deviceListener.removingMusic(removal, richChangeWithProgress.progress)
+          removeMusic(removal).map { _ =>
+            deviceListener.musicRemoved(removal, richChangeWithProgress.progress)
+          }
       }
     }
 
@@ -261,23 +239,21 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param addition The track to add.
       * @return Eventually either the resource that was newly created or an exception.
       */
-    def addMusic(addition: Addition): FutureEither[Exception, R] = {
+    def addMusic(addition: Addition): Try[R] = {
       addition.relativePath match {
         case rp @ DirectoryAndFile(dir, name) =>
           logger.info(s"Adding $rp")
           faultTolerance.tolerate {
             for {
-              directory <- EitherT(Future.successful(resource.mkdirs(root, dir)))
-              file <- EitherT(Future.successful(resource.findOrCreateResource(directory, "audio/mp3", name)))
-              _ <- EitherT(Future.successful(resource.writeTo(file, out => changesClient.music(addition, out))))
+              directory <- resource.mkdirs(root, dir)
+              file <- resource.findOrCreateResource(directory, "audio/mp3", name)
+              _ <- resource.writeTo(file, out => changesClient.music(addition, out))
             } yield {
               file
             }
           }
         case _ =>
-          EitherT.left[Future, Exception, R](
-            Future.successful(
-              new IllegalArgumentException(s"Relative path ${addition.relativePath} does not point to a file and directory.")))
+          Try(throw new IllegalArgumentException(s"Relative path ${addition.relativePath} does not point to a file and directory."))
       }
     }
 
@@ -286,14 +262,10 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param removal The track to remove.
       * @return Eventuall either [[Unit]] or an exception.
       */
-    def removeMusic(removal: Removal): FutureEither[Exception, Unit] = {
-      val path = removal.relativePath
+    def removeMusic(removal: Removal): Try[Unit] = {
+      val path: RelativePath = removal.relativePath
       logger.info(s"Removing $path")
-      EitherT.right[Future, Exception, Unit] {
-        Future.successful {
-          resource.find(root, path).foreach(resource.removeAndCleanDirectories)
-        }
-      }
+      Try(resource.find(root, path).foreach(resource.removeAndCleanDirectories))
     }
 
     /**
@@ -302,9 +274,9 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
       * @param accumulatedResult The number of changes that were synchronised or an exception with maybe an index.
       * @return Either [[Unit]] or an exception if the device descriptor could not be saved back to the device.
       */
-    def updateDeviceDescriptor(deviceDescriptor: DeviceDescriptor, accumulatedResult: Either[EWMI, Int]): Either[Exception, Unit] = {
+    def updateDeviceDescriptor(deviceDescriptor: DeviceDescriptor, accumulatedResult: Either[EWMI, Int]): Try[Unit] = {
       // Finished - log whether synchronisation was successful or not and write the new device descriptor back to the
-      val newDeviceDescriptor = accumulatedResult match {
+      val newDeviceDescriptor: DeviceDescriptor = accumulatedResult match {
         case Right(_) =>
           deviceDescriptor.copy(maybeLastModified = Some(clock.instant()), maybeOffset = None)
         case Left(ewmi) =>
@@ -328,24 +300,24 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
     */
   override def findDeviceDescriptor(roots: Iterable[R])
                                    (implicit resource: Resource[R],
-                                    resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, (DeviceDescriptor, R)] = {
-    def findDeviceDescriptorResource(root: R): Either[Exception, R] = {
+                                    resourceStreamProvider: ResourceStreamProvider[R]): Try[(DeviceDescriptor, R)] = {
+    def findDeviceDescriptorResource(root: R): Try[R] = {
       resource.find(root, RelativePath(DESCRIPTOR_FILENAME)) match {
-        case Some(deviceDescriptorResource) => Right(deviceDescriptorResource)
-        case _ => Left(new IllegalStateException(s"Cannot find a device descriptor resource for $root"))
+        case Some(deviceDescriptorResource) => Success(deviceDescriptorResource)
+        case _ => Try(throw new IllegalStateException(s"Cannot find a device descriptor resource for $root"))
       }
     }
 
-    def canWriteDeviceDescriptorResource(deviceDescriptorResource: R): Either[Exception, R] = {
+    def canWriteDeviceDescriptorResource(deviceDescriptorResource: R): Try[R] = {
       if (resource.canWrite(deviceDescriptorResource)) {
-        Right(deviceDescriptorResource)
+        Success(deviceDescriptorResource)
       }
       else {
-        Left(new IllegalStateException(s"$deviceDescriptorResource is not writeable"))
+        Try(throw new IllegalStateException(s"$deviceDescriptorResource is not writeable"))
       }
     }
 
-    val empty: Either[Exception, (DeviceDescriptor, R)] = Left(new RuntimeException("No resources supplied"))
+    val empty: Try[(DeviceDescriptor, R)] = Try(throw new RuntimeException("No resources supplied"))
     roots.foldLeft(empty) { (acc, root) =>
       acc.recoverWith {
         // If the previous attempt at finding a device descriptor failed, go to the next one.
@@ -360,7 +332,7 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
 
   private def loadDeviceDescriptor(deviceDescriptorResource: R)
                                   (implicit resource: Resource[R],
-                                   resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor] = {
+                                   resourceStreamProvider: ResourceStreamProvider[R]): Try[DeviceDescriptor] = {
     resource.readFrom(deviceDescriptorResource, in => {
       jsonCodec.parseDeviceDescriptor(Source.fromInputStream(in).mkString)
     })
@@ -371,10 +343,10 @@ class DeviceImpl[R](jsonCodec: JsonCodec,
     */
   override def reloadDeviceDescriptor(location: R)
                                      (implicit resource: Resource[R],
-                                      resourceStreamProvider: ResourceStreamProvider[R]): Either[Exception, DeviceDescriptor] = {
+                                      resourceStreamProvider: ResourceStreamProvider[R]): Try[DeviceDescriptor] = {
     resource.find(location, RelativePath(DESCRIPTOR_FILENAME)) match {
       case Some(deviceDescriptorResource) => loadDeviceDescriptor(deviceDescriptorResource)
-      case None => Left(new IllegalArgumentException(s"Cannot find a device descriptor at $location"))
+      case None => Try(throw new IllegalArgumentException(s"Cannot find a device descriptor at $location"))
     }
   }
 }

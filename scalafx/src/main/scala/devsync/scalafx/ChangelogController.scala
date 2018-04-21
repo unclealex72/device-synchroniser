@@ -107,12 +107,13 @@ object ChangelogController {
     */
   def apply(stage: Stage)(shutdownCallback: => Unit): ViewAndController[ChangelogController] = {
     val view = View("changelog")
-    val searchingPane = view.component[jfx.Node]("searchingPane")
-    val changesPane = view.component[jfx.Node]("changesPane")
-    val syncButton = view.component[jfxc.Button]("syncButton")
-    val listView = view.component[jfxc.ListView[ChangelogItemModel]]("listView")
-    val topLabel = view.component[jfxc.Label]("topLabel")
-    val bottomLabel = view.component[jfxc.Label]("bottomLabel")
+    val searchingPane: jfx.Node = view.component[jfx.Node]("searchingPane")
+    val changesPane: jfx.Node = view.component[jfx.Node]("changesPane")
+    val syncButton: jfxc.Button = view.component[jfxc.Button]("syncButton")
+    val listView: jfxc.ListView[ChangelogItemModel] =
+      view.component[jfxc.ListView[ChangelogItemModel]]("listView")
+    val topLabel: jfxc.Label = view.component[jfxc.Label]("topLabel")
+    val bottomLabel: jfxc.Label = view.component[jfxc.Label]("bottomLabel")
 
     view.withController[ChangelogController](
       new ChangelogControllerImpl(

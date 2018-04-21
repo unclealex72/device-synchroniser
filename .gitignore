@@ -4,3 +4,4 @@ bin/
 local.properties
 /.idea
 proguard-sbt.txt
+sandbox/

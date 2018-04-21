@@ -128,36 +128,40 @@ class CirceCodec extends JsonCodec {
   /**
     * @inheritdoc
     */
-  override def parseChangelog(json: String): Either[Exception, Changelog] = decode[Changelog](json)
+  override def parseChangelog(json: String): Try[Changelog] = parse[Changelog](json)
 
   /**
     * @inheritdoc
     */
-  override def parseChanges(json: String): Either[Exception, Changes] = decode[Changes](json)
+  override def parseChanges(json: String): Try[Changes] = parse[Changes](json)
 
   /**
     * @inheritdoc
     */
-  override def parseTags(json: String): Either[Exception, Tags] = decode[Tags](json)
+  override def parseTags(json: String): Try[Tags] = parse[Tags](json)
 
   /**
     * Parse a [[Change]]. This method is visible for testing.
     * @param json The json to parse.
     * @return Either a [[Change]] or an exception.
     */
-  def parseChange(json: String): Either[Exception, Change] = decode[Change](json)
+  def parseChange(json: String): Try[Change] = parse[Change](json)
 
   /**
     * Parse a [[ChangelogItem]]. This method is visible for testing.
     * @param json The json to parse.
     * @return Either a [[ChangelogItem]] or an exception.
     */
-  def parseChangelogItem(json: String): Either[Exception, ChangelogItem] = decode[ChangelogItem](json)
+  def parseChangelogItem(json: String): Try[ChangelogItem] = parse[ChangelogItem](json)
 
   /**
     * @inheritdoc
     */
-  override def parseDeviceDescriptor(json: String): Either[Exception, DeviceDescriptor] = decode[DeviceDescriptor](json)
+  override def parseDeviceDescriptor(json: String): Try[DeviceDescriptor] = parse[DeviceDescriptor](json)
+
+  private def parse[A](json: String)(implicit ev: Decoder[A]): Try[A] = {
+    decode[A](json).toTry
+  }
 
   /**
     * @inheritdoc

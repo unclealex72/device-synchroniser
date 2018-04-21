@@ -116,14 +116,14 @@ object FauxFile {
       }
     }
 
-    override def findOrCreateResource(fauxFile: FauxFile, mimeType: String, name: String): Either[Exception, FauxFile] = {
+    override def findOrCreateResource(fauxFile: FauxFile, mimeType: String, name: String): Try[FauxFile] = {
       fauxFile match {
         case d : Directory => Right(d.createFile(mimeType, name))
         case _ => Left(new IOException(s"Cannot create file $name at ${fauxFile.path}"))
       }
     }
 
-    override def mkdir(fauxFile: FauxFile, name: String): Either[Exception, FauxFile] = {
+    override def mkdir(fauxFile: FauxFile, name: String): Try[FauxFile] = {
       fauxFile match {
         case d: Directory => d.children.find(child => child.name == name) match {
           case Some(d: Directory) => Right(d)
@@ -151,14 +151,14 @@ object FauxFile {
 
   implicit object FauxResourceStreamProvider extends ResourceStreamProvider[FauxFile] {
 
-    override def provideInputStream(fauxFile: FauxFile): Either[Exception, InputStream] = {
+    override def provideInputStream(fauxFile: FauxFile): Try[InputStream] = {
       fauxFile match {
         case f : File => Right(new ByteArrayInputStream(f.content.getOrElse("").getBytes("UTF-8")))
         case d : Directory => Left(new IOException(s"Cannot read from a directory ${d.path}"))
       }
     }
 
-    override def provideOutputStream(fauxFile: FauxFile): Either[Exception, OutputStream] = {
+    override def provideOutputStream(fauxFile: FauxFile): Try[OutputStream] = {
       fauxFile match {
         case f : File =>
           Right(new ByteArrayOutputStream() {

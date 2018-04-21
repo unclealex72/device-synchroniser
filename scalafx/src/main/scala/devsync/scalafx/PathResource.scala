@@ -19,9 +19,10 @@ package devsync.scalafx
 import java.io.{InputStream, OutputStream}
 import java.nio.file.{FileAlreadyExistsException, Files, Path}
 
-import cats.syntax.either._
 import devsync.json.RelativePath
 import devsync.sync.{Resource, ResourceStreamProvider}
+
+import scala.util.Try
 
 /**
   * The typeclass that allows [[Path]]s to be used as [[Resource]]s.
@@ -54,9 +55,9 @@ object PathResource {
     /**
       * @inheritdoc
       */
-    override def findOrCreateResource(path: Path, mimeType: String, name: String): Either[Exception, Path] = {
-      tryIO {
-        val newPath = path.resolve(name)
+    override def findOrCreateResource(path: Path, mimeType: String, name: String): Try[Path] = {
+      Try {
+        val newPath: Path = path.resolve(name)
         Some(newPath).filter(Files.exists(_)).getOrElse(Files.createFile(newPath))
       }
     }
@@ -64,19 +65,19 @@ object PathResource {
     /**
       * @inheritdoc
       */
-    override def mkdir(path: Path, name: String): Either[Exception, Path] = {
-      liftTryIO{
-        val dir = path.resolve(name)
+    override def mkdir(path: Path, name: String): Try[Path] = {
+      Try {
+        val dir: Path = path.resolve(name)
         if (Files.exists(dir)) {
           if (Files.isDirectory(dir)) {
-            Right(dir)
+            dir
           }
           else {
-            Left(new FileAlreadyExistsException(s"$dir already exists and is not a directory"))
+            throw new FileAlreadyExistsException(s"$dir already exists and is not a directory")
           }
         }
         else {
-          Right(Files.createDirectory(dir))
+          Files.createDirectory(dir)
         }
       }
     }
@@ -85,7 +86,7 @@ object PathResource {
       * @inheritdoc
       */
     override def remove(path: Path): Unit = {
-      tryIO(Files.deleteIfExists(path)).getOrElse({})
+      Try(Files.deleteIfExists(path)).getOrElse({})
     }
 
     /**
@@ -99,7 +100,7 @@ object PathResource {
       * @inheritdoc
       */
     override def isEmpty(path: Path): Boolean = {
-      tryIO {
+      Try {
         !Files.newDirectoryStream(path).iterator().hasNext
       }.getOrElse(false)
     }
@@ -107,38 +108,16 @@ object PathResource {
     /**
       * @inheritdoc
       */
-    override def provideInputStream(path: Path): Either[Exception, InputStream] = {
-      tryIO(Files.newInputStream(path))
+    override def provideInputStream(path: Path): Try[InputStream] = {
+      Try(Files.newInputStream(path))
     }
 
     /**
       * @inheritdoc
       */
-    override def provideOutputStream(path: Path): Either[Exception, OutputStream] = {
-      tryIO(Files.newOutputStream(path))
+    override def provideOutputStream(path: Path): Try[OutputStream] = {
+      Try(Files.newOutputStream(path))
     }
 
-    /**
-      * Run a block of code in a try block.
-      * @param block The block of code to run.
-      * @tparam V The type of result to return.
-      * @return Either the result of running the block or an exception if one occurred.
-      */
-    def tryIO[V](block: => V): Either[Exception, V] = liftTryIO(Right(block))
-
-    /**
-      * Run a block of code in a try block.
-      * @param block The block of code to run.
-      * @tparam V The type of result to return.
-      * @return Either the result of running the block or an exception if one occurred.
-      */
-    def liftTryIO[V](block: => Either[Exception, V]): Either[Exception, V] = {
-      try {
-        block
-      }
-      catch {
-        case e: Exception => Left(e)
-      }
-    }
   }
 }

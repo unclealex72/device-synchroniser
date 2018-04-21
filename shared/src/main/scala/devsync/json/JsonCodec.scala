@@ -16,6 +16,8 @@
 
 package devsync.json
 
+import scala.util.Try
+
 /**
   * An trait that can read and parse [[Changelog]]s, [[Changes]] and [[DeviceDescriptor]]s.
   **/
@@ -26,21 +28,21 @@ trait JsonCodec {
     * @param json The JSON to parse.
     * @return A new [[Changelog]] or an error.
     */
-  def parseChangelog(json: String): Either[Exception, Changelog]
+  def parseChangelog(json: String): Try[Changelog]
 
   /**
     * Parse [[Changes]].
     * @param json The JSON to parse.
     * @return A new [[Changes]] or an error.
     */
-  def parseChanges(json: String): Either[Exception, Changes]
+  def parseChanges(json: String): Try[Changes]
 
   /**
     * Parse [[Tags]].
     * @param json The JSON to parse.
     * @return A new [[Tags]] or an error.
     */
-  def parseTags(json: String): Either[Exception, Tags]
+  def parseTags(json: String): Try[Tags]
 
   /**
     * Parse a [[DeviceDescriptor]].
@@ -48,7 +50,7 @@ trait JsonCodec {
     * @return A new [[DeviceDescriptor]] or an error.
     */
 
-  def parseDeviceDescriptor(json: String): Either[Exception, DeviceDescriptor]
+  def parseDeviceDescriptor(json: String): Try[DeviceDescriptor]
 
   /**
     * Convert a [[DeviceDescriptor]] to JSON.
