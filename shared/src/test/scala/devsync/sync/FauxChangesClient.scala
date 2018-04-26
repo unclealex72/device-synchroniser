@@ -24,6 +24,8 @@ import devsync.json._
 import devsync.remote.ChangesClient
 import org.threeten.bp.Instant
 
+import scala.util.{Failure, Success, Try}
+
 /**
   * Created by alex on 06/04/17
   **/
@@ -44,13 +46,13 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
 
   def findChange(relativePath: RelativePath): Try[FA] = {
     def filterChange: FauxChange => Try[FA] = {
-      case fa : FA => Right(fa)
-      case _ : FF => Left(new IOException(s"Change $relativePath is marked as a failure"))
-      case _ => Left(new FileNotFoundException(s"Change $relativePath is not an addition"))
+      case fa : FA => Success(fa)
+      case _ : FF => Failure(new IOException(s"Change $relativePath is marked as a failure"))
+      case _ => Failure(new FileNotFoundException(s"Change $relativePath is not an addition"))
     }
     for {
       change <- changes.find(fc => fc.relativePath == relativePath).toRight(
-        new FileNotFoundException(s"Cannot find addition $relativePath"))
+        new FileNotFoundException(s"Cannot find addition $relativePath")).toTry
       filteredChange <- filterChange(change)
     } yield {
       filteredChange
@@ -60,7 +62,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
   /**
     * Get the changes for a user since a specific date.
     */
-  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changes] = Right {
+  override def changesSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changes] = Success {
     this.maybeSince = maybeSince
     Changes(realChanges)
   }
@@ -69,7 +71,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
     * Count the number of changelog items for a user since a specific date
     */
   override def changelogSince(user: String, extension: Extension, maybeSince: Option[Instant]): Try[Changelog] =
-    Left(new Exception())
+    Failure(new Exception())
 
   override def music(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit] = {
     findChange(item.relativePath).flatMap { fa =>
@@ -81,7 +83,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
 
   override def tags(item: HasLinks with HasRelativePath): Try[Tags] =
     findChange(item.relativePath).flatMap { fa =>
-      Right(Tags(
+      Success(Tags(
         albumArtistSort = fa.artist,
         albumArtist = fa.artist,
         album = fa.album,
@@ -100,7 +102,7 @@ case class FauxChangesClient(now: Instant, changes: FauxChange*) extends Changes
     }
 
   override def artwork(item: HasLinks with HasRelativePath, out: OutputStream): Try[Unit] =
-    Left(new Exception())
+    Failure(new Exception())
 }
 
 sealed trait FauxChange {

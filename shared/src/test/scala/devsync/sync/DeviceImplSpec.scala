@@ -42,9 +42,9 @@ class DeviceImplSpec extends Specification {
       FA("Slayer", "Reign in Blood", 5, "Jesus Saves.mp3", "Phew")
     )
     val listener = new LoggingDeviceListener()
-    val result: Either[(Exception, Option[Int]), Int] = Await.result(
-      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z")).synchronise(
-        fs, changesClient, listener), 1.minute)
+    val result: Either[(Exception, Option[Int]), Int] =
+      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z"), NoOpFaultTolerance).synchronise(
+        fs, changesClient, listener)
     "fail fast" in {
       result must beLeft.like {
         case (_: Exception, maybeIdx: Option[Int]) => maybeIdx must beNone
@@ -72,9 +72,9 @@ class DeviceImplSpec extends Specification {
       FA("Slayer", "Reign in Blood", 5, "Jesus Saves.mp3", "Phew")
     )
     val listener = new LoggingDeviceListener()
-    val result: Either[(Exception, Option[Int]), Int] = Await.result(
-      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z")).synchronise(
-        fs, changesClient, listener), 1.minute)
+    val result: Either[(Exception, Option[Int]), Int] =
+      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z"), NoOpFaultTolerance).synchronise(
+        fs, changesClient, listener)
     "create new files for all each addition and ignore removals" in {
       fs.flatten must be_==(Seq(
         "/",
@@ -110,9 +110,9 @@ class DeviceImplSpec extends Specification {
       FA("Slayer", "Reign in Blood", 5, "Jesus Saves.mp3", "Phew")
     )
     val listener = new LoggingDeviceListener()
-    val result: Either[(Exception, Option[Int]), Int] = Await.result(
-      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z")).synchronise(
-        fs, changesClient, listener), 1.minute)
+    val result: Either[(Exception, Option[Int]), Int] =
+      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z"), NoOpFaultTolerance).synchronise(
+        fs, changesClient, listener)
     "create new files for all each addition and remove the removals" in {
       fs.flatten must be_==(Seq(
         "/",
@@ -148,9 +148,9 @@ class DeviceImplSpec extends Specification {
       FA("Napalm Death", "Scum", 12, "You Suffer.mp3", "But why?")
     )
     val listener = new LoggingDeviceListener()
-    val result: Either[(Exception, Option[Int]), Int] = Await.result(
-      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z")).synchronise(
-        fs, changesClient, listener), 1.minute)
+    val result: Either[(Exception, Option[Int]), Int] =
+      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z"), NoOpFaultTolerance).synchronise(
+        fs, changesClient, listener)
     "process all changes before the failure and mark it in the device descriptor file" in {
       fs.flatten must be_==(Seq(
         "/",
@@ -190,9 +190,9 @@ class DeviceImplSpec extends Specification {
       FA("Napalm Death", "Scum", 12, "You Suffer.mp3", "But why?")
     )
     val listener = new LoggingDeviceListener()
-    val result: Either[(Exception, Option[Int]), Int] = Await.result(
-      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z")).synchronise(
-        fs, changesClient, listener), 1.minute)
+    val result: Either[(Exception, Option[Int]), Int] =
+      new DeviceImpl[FauxFile](new CirceCodec, now("2017-03-13T22:05:01Z"), NoOpFaultTolerance).synchronise(
+        fs, changesClient, listener)
     "continue from the change that previously failed" in {
       fs.flatten must be_==(Seq(
         "/",
@@ -238,19 +238,19 @@ class DeviceImplSpec extends Specification {
                               maybeTags: Option[Tags],
                               maybeArtwork: Option[Array[Byte]],
                               overallProgress: Progress): Unit = {
-      add("ADDING", addition.relativePath, overallProgress)
+      add("ADDING", addition.relativePath, overallProgress.number, overallProgress.total)
     }
 
     override def musicAdded(addition: Addition, maybeTags: Option[Tags], maybeArtwork: Option[Array[Byte]], overallProgress: Progress, resource: FauxFile): Unit = {
-      add("ADDED", addition.relativePath, overallProgress)
+      add("ADDED", addition.relativePath, overallProgress.number, overallProgress.total)
     }
 
     override def removingMusic(removal: Removal, overallProgress: Progress): Unit = {
-      add("REMOVING", removal.relativePath, overallProgress)
+      add("REMOVING", removal.relativePath, overallProgress.number, overallProgress.total)
     }
 
     override def musicRemoved(removal: Removal, overallProgress: Progress): Unit = {
-      add("REMOVED", removal.relativePath, overallProgress)
+      add("REMOVED", removal.relativePath, overallProgress.number, overallProgress.total)
     }
 
     override def synchronisingFailed(e: Exception, maybeIdx: Option[Int]): Unit = {

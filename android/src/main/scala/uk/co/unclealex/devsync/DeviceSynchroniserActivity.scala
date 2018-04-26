@@ -126,7 +126,7 @@ class DeviceSynchroniserActivity extends AppCompatActivity with Contexts[AppComp
             finishAndRemoveTask()
           }
         })
-        val dialog = builder.create
+        val dialog: AlertDialog = builder.create
         dialog.show()
     }
   }

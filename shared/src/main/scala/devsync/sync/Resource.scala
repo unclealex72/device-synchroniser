@@ -18,9 +18,9 @@ package devsync.sync
 
 import java.io.{InputStream, OutputStream}
 
-import cats.syntax.either._
 import com.typesafe.scalalogging.StrictLogging
 import devsync.json.RelativePath
+import simulacrum.typeclass
 
 import scala.util.Try
 
@@ -142,8 +142,10 @@ trait Resource[R] extends StrictLogging {
   def removeAndCleanDirectories(resource: R): Unit = {
     if (exists(resource)) {
       remove(resource)
-      Iterator.iterate(parent(resource))(mr => mr.flatMap(parent)).takeWhile(mr => mr.exists(r => !isEmpty(r))).foreach { mr =>
-        mr.foreach(remove)
+      parent(resource).foreach { parent =>
+        if (isEmpty(parent)) {
+          removeAndCleanDirectories(parent)
+        }
       }
     }
   }

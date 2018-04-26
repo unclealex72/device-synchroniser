@@ -143,8 +143,10 @@ object DocumentFileResource {
     /**
       * @inheritdoc
       */
-    override def isEmpty(documentFile: DocumentFile): Boolean =
-      Option(documentFile.listFiles()).exists(_.isEmpty)
+    override def isEmpty(documentFile: DocumentFile): Boolean = {
+      val maybeChildFiles = Option(documentFile.listFiles())
+      maybeChildFiles.map(_.length).getOrElse(0) == 0
+    }
   }
 
   /**

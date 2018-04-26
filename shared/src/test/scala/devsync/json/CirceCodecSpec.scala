@@ -18,13 +18,13 @@ package devsync.json
 
 import java.net.URL
 
-import cats.syntax.either._
 import devsync.json.Extension.{M4A, MP3}
 import org.specs2.mutable.Specification
 import org.threeten.bp.format.DateTimeFormatter
 import org.threeten.bp.{Instant, ZoneId}
 
 import scala.io.Source
+import scala.util.Try
 
 /**
   * Created by alex on 20/03/17
@@ -139,7 +139,7 @@ class CirceCodecSpec extends Specification {
       val data = Source.fromInputStream(getClass.getResourceAsStream(str)).mkString
       method(new CirceCodec)(data).recover {
         case e: Exception => throw e
-      }.right.get
+      }.get
     }
 
   }

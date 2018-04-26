@@ -21,6 +21,7 @@ import java.io._
 import devsync.json.{DirectoryAndFile, RelativePath}
 
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by alex on 06/04/17
@@ -118,19 +119,19 @@ object FauxFile {
 
     override def findOrCreateResource(fauxFile: FauxFile, mimeType: String, name: String): Try[FauxFile] = {
       fauxFile match {
-        case d : Directory => Right(d.createFile(mimeType, name))
-        case _ => Left(new IOException(s"Cannot create file $name at ${fauxFile.path}"))
+        case d : Directory => Success(d.createFile(mimeType, name))
+        case _ => Failure(new IOException(s"Cannot create file $name at ${fauxFile.path}"))
       }
     }
 
     override def mkdir(fauxFile: FauxFile, name: String): Try[FauxFile] = {
       fauxFile match {
         case d: Directory => d.children.find(child => child.name == name) match {
-          case Some(d: Directory) => Right(d)
-          case Some(f: File) => Left(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
-          case None => Right(d.createDirectory(name))
+          case Some(d: Directory) => Success(d)
+          case Some(f: File) => Failure(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
+          case None => Success(d.createDirectory(name))
         }
-        case f: File => Left(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
+        case f: File => Failure(new IOException(s"Cannot create directory $name as ${f.path} is not a directory."))
       }
     }
 
@@ -153,21 +154,21 @@ object FauxFile {
 
     override def provideInputStream(fauxFile: FauxFile): Try[InputStream] = {
       fauxFile match {
-        case f : File => Right(new ByteArrayInputStream(f.content.getOrElse("").getBytes("UTF-8")))
-        case d : Directory => Left(new IOException(s"Cannot read from a directory ${d.path}"))
+        case f : File => Success(new ByteArrayInputStream(f.content.getOrElse("").getBytes("UTF-8")))
+        case d : Directory => Failure(new IOException(s"Cannot read from a directory ${d.path}"))
       }
     }
 
     override def provideOutputStream(fauxFile: FauxFile): Try[OutputStream] = {
       fauxFile match {
         case f : File =>
-          Right(new ByteArrayOutputStream() {
+          Success(new ByteArrayOutputStream() {
             override def close(): Unit = {
               super.close()
               f.content = Some(toString("UTF-8"))
             }
           })
-        case d: Directory => Left(new IOException(s"Cannot write to directory ${d.path}"))
+        case d: Directory => Failure(new IOException(s"Cannot write to directory ${d.path}"))
       }
     }
   }
